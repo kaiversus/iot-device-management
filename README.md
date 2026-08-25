@@ -1,12 +1,12 @@
-# Hệ Thống Quản Lý Thiết Bị IoT (IoT Device Management)
+# IoT Device Management System
 
-Dự án phát triển hệ thống web quản lý các thiết bị IoT, hỗ trợ giao tiếp dữ liệu theo thời gian thực (Real-time) và bảo mật nâng cao.
+A project to develop a web system for managing IoT devices, supporting real-time data communication and advanced security.
 
-## Thành viên nhóm & Phân công (Vertical Slicing)
+## Team Members & Assignments
 
-1. **[Đinh Thiên Bảo]**: Module Xác thực, Phân quyền & Quản lý User (Spring Security, JWT, HttpOnly Cookie).
-2. **[Ngô Quang Đạt]**: Module Quản lý thiết bị IoT (CRUD thiết bị, Upload ảnh lên Cloudinary).
-3. **[Nguyễn Viết Đăng]**: Module Thu thập dữ liệu IoT & Giám sát Real-time (REST API cho Postman, WebSocket, Dashboard Chart).
+1. **[Đinh Thiên Bảo]**: Authentication, Authorization & User Management Module (Spring Security, JWT, HttpOnly Cookie).
+2. **[Ngô Quang Đạt]**: IoT Device Management Module (Device CRUD, Cloudinary Image Upload).
+3. **[Nguyễn Viết Đăng]**: IoT Data Collection & Real-time Monitoring Module (REST API for Postman, WebSocket, Dashboard Chart).
 
 ---
 
@@ -16,96 +16,97 @@ Dự án phát triển hệ thống web quản lý các thiết bị IoT, hỗ t
 - **Database:** MySQL.
 - **Storage:** Cloudinary.
 
-### Giải thích Tech Stack
-- **Spring MVC:** mô hình chia dự án thành 3 tầng (Model, View, Controller)
-- **Spring Data JPA:** công cụ giao tiếp với Database
-- **Spring Security:** Kiểm soát Authen và Author
-- **JWT:** là một chuẩn JSON Web Token để xác thực và trao đổi thông tin an toàn giữa các bên.
-- **WebSocket:** Giao thức giao tiếp hai chiều giữa client và server theo thời gian thực.
-- **Thymeleaf:** nhúng dữ liệu từ backend lên HTML
-- **Bootstrap:** CSS Framework
-- **MySQL:** Relational Database
-- **Cloudinary:** Lưu trữ và quản lý ảnh, trả về 1 image_url để MySQL lưu
+### Tech Stack Explanation
+- **Spring MVC:** An architectural pattern that separates the project into 3 layers (Model, View, Controller).
+- **Spring Data JPA:** A tool for communicating with the Database.
+- **Spring Security:** Controls Authentication and Authorization.
+- **JWT:** JSON Web Token standard for secure authentication and information exchange between parties.
+- **WebSocket:** A two-way, real-time communication protocol between client and server.
+- **Thymeleaf:** Embeds data from the backend into HTML.
+- **Bootstrap:** CSS Framework.
+- **MySQL:** Relational Database.
+- **Cloudinary:** Stores and manages images, returning an image_url for MySQL to save.
+
 ---
 
-## Yêu cầu môi trường (Prerequisites)
+## Prerequisites
 
-Để chạy được dự án này, các thành viên cần cài đặt các phần mềm sau:
-1. **JDK 26**: Môi trường chạy Java.
-2. **MySQL Server & MySQL Workbench** (hoặc DBeaver/Navicat): Để lưu trữ và xem dữ liệu.
+To run this project, team members need to install the following software:
+1. **JDK 26**: Java runtime environment.
+2. **MySQL Server & MySQL Workbench** (or DBeaver/Navicat): To store and view data.
 3. **Eclipse (Enterprise Java and Web Developer)**.
-4. **Git**: Để quản lý mã nguồn.
-5. **Postman**: Để giả lập việc gửi dữ liệu từ thiết bị IoT.
+4. **Git**: For source code management.
+5. **Postman**: To simulate sending data from IoT devices.
 
 ---
 
-## Hướng dẫn Cài đặt & Setup Môi trường
+## Installation & Environment Setup Guide
 
-Trước mắt thì cấu hình các phần core để làm việc cơ bản trước qua video của thầy: https://www.youtube.com/watch?v=koL1_6OXjl0&list=PL0yFty_aTOFM_6P9Tu9AJN6UOJDpr-uFU
+Initially, configure the core parts for basic operation following the teacher's video tutorial: https://www.youtube.com/watch?v=koL1_6OXjl0&list=PL0yFty_aTOFM_6P9Tu9AJN6UOJDpr-uFU
 
-## Quy trình làm việc với Git (Dành cho Team)
+## GitHub Workflow
 
-**Tuyệt đối KHÔNG code và đẩy thẳng lên nhánh `main`.**
+**Absolutely DO NOT code and push directly to the `main` branch.**
 
-1. Trước khi code, luôn kéo code mới nhất về:
+1. Before coding, always pull the latest code:
    ```bash
    git checkout main
    git pull origin main
    ```
-2. Tạo nhánh mới theo tính năng bạn được phân công:
+2. Create a new branch according to your assigned feature:
    ```bash
-   git checkout -b feature/ten-tinh-nang # Ex: git checkout -b feature/auth
+   git checkout -b feature/feature-name # Ex: git checkout -b feature/auth
    ```
-3. Sau khi code và test xong:
+3. After coding and testing is complete:
    ```bash
    git add .
-   git commit -m "Thêm chức năng đăng nhập JWT"
-   git push origin feature/ten-tinh-nang
+   git commit -m "Add JWT login feature"
+   git push origin feature/feature-name
    ```
-4. Lên GitHub, tạo **Pull Request** để nhóm review và Merge vào `main`.
+4. Go to GitHub, create a **Pull Request** for the team to review and Merge into `main`.
 
-## Quy ước làm việc với Git (Git Conventions)
+## Git Conventions
 
-### 1. Quy ước đặt tên Nhánh (Branch Naming)
-**Cú pháp:** `<tên_thành_viên>/<tên_tính_năng>`
+### 1. Branch Naming
+**Syntax:** `<member_name>/<feature_name>`
 
-*Lưu ý: Viết chữ thường, không dấu và dùng dấu gạch ngang `-` để ngăn cách các từ.*
+*Note: Use lowercase, no accents, and hyphens `-` to separate words.*
 
-**Ví dụ:**
+**Examples:**
 - `bao/jwt-auth-security`
 - `dat/device-crud`
 - `dang/websocket-dashboard`
 
 ---
 
-### 2. Quy ước viết Commit Message
-**Cú pháp:** `<action_thực_hiện>: <mô_tả_ngắn_gọn_bằng_tiếng_anh>`
+### 2. Commit Message Conventions
+**Syntax:** `<action_type>: <short_description_in_english>`
 
-Các `action_thực_hiện` (tiền tố) được quy định như sau:
+The `action_type` (prefix) is defined as follows:
 
-- `feat`: Thêm một tính năng mới hoàn toàn (Feature).
-- `fix`: Sửa một lỗi (Bug).
-- `update`: Cập nhật hoặc chỉnh sửa một tính năng/code đã có sẵn.
-- `ui`: Thêm hoặc thay đổi giao diện (HTML/CSS/Thymeleaf/Bootstrap).
-- `docs`: Thay đổi tài liệu (Ví dụ: README, comment code).
-- `refactor`: Tối ưu hóa, dọn dẹp lại code nhưng không làm thay đổi chức năng.
+- `feat`: Add a completely new feature.
+- `fix`: Fix a bug.
+- `update`: Update or modify an existing feature/code.
+- `ui`: Add or change the UI (HTML/CSS/Thymeleaf/Bootstrap).
+- `docs`: Change documentation (e.g., README, code comments).
+- `refactor`: Optimize and clean up code without changing functionality.
 
-**Ví dụ:**
-- `feat: Thêm chức năng phân quyền bằng Spring Security`
-- `ui: Thiết kế xong form thêm mới thiết bị IoT`
-- `update: Đổi logic lưu ảnh từ thư mục local sang Cloudinary`
-- `fix: Sửa lỗi không nhận được Token khi đăng nhập`
-- `docs: Cập nhật hướng dẫn cài đặt database vào README`
+**Examples:**
+- `feat: Add role-based authorization with Spring Security`
+- `ui: Design the new IoT device form`
+- `update: Change image saving logic from local to Cloudinary`
+- `fix: Resolve issue with missing Token on login`
+- `docs: Update database setup guide in README`
 
 ---
 
-### 3. Workflow with Github
-1. Kéo code mới nhất từ nhánh chính về máy:
+### 3. Workflow with GitHub
+1. Pull the latest code from the main branch to your local machine:
    `git checkout main` -> `git pull origin main`
-2. Tạo nhánh mới để bắt đầu làm việc:
+2. Create a new branch to start working:
    `git checkout -b bao/jwt-auth-security`
-3. Code và commit theo cú pháp:
-   `git add .` -> `git commit -m "feat: Khởi tạo module JWT"`
-4. Đẩy nhánh lên GitHub:
-   `git push origin thuan/login-jwt`
-5. Lên GitHub tạo Pull Request (PR) để ghép code vào `main`.
+3. Code and commit using the syntax:
+   `git add .` -> `git commit -m "feat: Initialize JWT module"`
+4. Push the branch to GitHub:
+   `git push origin bao/jwt-auth-security`
+5. Go to GitHub and create a Pull Request (PR) to merge code into `main`.
