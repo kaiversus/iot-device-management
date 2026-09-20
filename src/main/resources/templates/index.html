@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Home - IoT Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="/">IoT Management</a>
+    <div class="collapse navbar-collapse" id="navbarNav">
+      <ul class="navbar-nav ms-auto" id="navItems">
+        <!-- JS will populate based on auth token -->
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-5 text-center">
+    <h1>Welcome to IoT Device Management System</h1>
+    <p class="lead">Please login to manage your devices.</p>
+</div>
+
+<script>
+    function parseJwt (token) {
+        try {
+            return JSON.parse(atob(token.split('.')[1]));
+        } catch (e) {
+            return null;
+        }
+    }
+
+    const token = localStorage.getItem("token");
+    const navItems = document.getElementById("navItems");
+
+    if (token) {
+        const decoded = parseJwt(token);
+        // Note: Real app should verify token expiry
+        navItems.innerHTML = `
+            <li class="nav-item"><a class="nav-link" href="#">Hello, ${decoded.sub}</a></li>
+            <li class="nav-item"><a class="nav-link btn btn-danger text-white ms-2" href="#" id="logoutBtn">Logout</a></li>
+        `;
+        
+        document.getElementById("logoutBtn").addEventListener("click", function() {
+            localStorage.removeItem("token");
+            window.location.href = "/login";
+        });
+    } else {
+        navItems.innerHTML = `
+            <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
+            <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
+        `;
+    }
+</script>
+
+</body>
+</html>
