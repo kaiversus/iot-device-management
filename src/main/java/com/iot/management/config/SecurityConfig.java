@@ -76,7 +76,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/", "/login", "/register", "/forgot-password", "/css/**", "/js/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/manager/**").hasAnyRole("ADMIN", "MANAGER")
-                    .anyRequest().authenticated();
+                    .anyRequest().authenticated()
+                    .and()
+                .logout()
+                    .logoutUrl("/logout")
+                    .deleteCookies("jwt_token")
+                    .logoutSuccessUrl("/login");
 
         // Add our custom JWT security filter
         http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

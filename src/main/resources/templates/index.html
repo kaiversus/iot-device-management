@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
     <meta charset="UTF-8">
     <title>Home - IoT Management</title>
@@ -11,8 +11,27 @@
   <div class="container-fluid">
     <a class="navbar-brand" href="/">IoT Management</a>
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto" id="navItems">
-        <!-- JS will populate based on auth token -->
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item" sec:authorize="!isAuthenticated()">
+            <a class="nav-link" href="/login">Login</a>
+        </li>
+        <li class="nav-item" sec:authorize="!isAuthenticated()">
+            <a class="nav-link" href="/register">Register</a>
+        </li>
+        <li class="nav-item" sec:authorize="isAuthenticated()">
+            <a class="nav-link" href="#">Hello, <span sec:authentication="name"></span></a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('ADMIN')">
+            <a class="nav-link text-warning fw-bold" href="#">[Admin Menu]</a>
+        </li>
+        <li class="nav-item" sec:authorize="hasRole('MANAGER')">
+            <a class="nav-link text-info fw-bold" href="#">[Manager Menu]</a>
+        </li>
+        <li class="nav-item" sec:authorize="isAuthenticated()">
+            <form th:action="@{/logout}" method="post" class="d-inline">
+                <button type="submit" class="nav-link btn btn-danger text-white ms-2 border-0">Logout</button>
+            </form>
+        </li>
       </ul>
     </div>
   </div>
@@ -20,40 +39,9 @@
 
 <div class="container mt-5 text-center">
     <h1>Welcome to IoT Device Management System</h1>
-    <p class="lead">Please login to manage your devices.</p>
+    <p class="lead" sec:authorize="!isAuthenticated()">Please login to manage your devices.</p>
+    <p class="lead" sec:authorize="isAuthenticated()">You are successfully logged in!</p>
 </div>
-
-<script>
-    function parseJwt (token) {
-        try {
-            return JSON.parse(atob(token.split('.')[1]));
-        } catch (e) {
-            return null;
-        }
-    }
-
-    const token = localStorage.getItem("token");
-    const navItems = document.getElementById("navItems");
-
-    if (token) {
-        const decoded = parseJwt(token);
-        // Note: Real app should verify token expiry
-        navItems.innerHTML = `
-            <li class="nav-item"><a class="nav-link" href="#">Hello, ${decoded.sub}</a></li>
-            <li class="nav-item"><a class="nav-link btn btn-danger text-white ms-2" href="#" id="logoutBtn">Logout</a></li>
-        `;
-        
-        document.getElementById("logoutBtn").addEventListener("click", function() {
-            localStorage.removeItem("token");
-            window.location.href = "/login";
-        });
-    } else {
-        navItems.innerHTML = `
-            <li class="nav-item"><a class="nav-link" href="/login">Login</a></li>
-            <li class="nav-item"><a class="nav-link" href="/register">Register</a></li>
-        `;
-    }
-</script>
 
 </body>
 </html>
