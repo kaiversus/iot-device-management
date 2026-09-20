@@ -22,10 +22,21 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, javax.servlet.http.HttpServletResponse responseCookie) {
         try {
             String jwt = authService.authenticateUser(loginRequest);
-            return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
+            
+            javax.servlet.http.Cookie cookie = new javax.servlet.http.Cookie("jwt_token", jwt);
+            cookie.setHttpOnly(true);
+            cookie.setPath("/");
+            cookie.setMaxAge(24 * 60 * 60); // 1 day
+            // cookie.setSecure(true); // Enable in production with HTTPS
+            
+            responseCookie.addCookie(cookie);
+            
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Login successful");
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, String> response = new HashMap<>();
             response.put("error", "Invalid credentials");
