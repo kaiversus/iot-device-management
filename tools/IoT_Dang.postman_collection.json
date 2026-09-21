@@ -1,0 +1,146 @@
+{
+  "info": {
+    "name": "IoT - Module Đăng",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8080"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Bình thường (không cảnh báo)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deviceId\": 1,\n  \"temperature\": 30.5,\n  \"humidity\": 60\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/iot/data",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "iot",
+            "data"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Vượt ngưỡng (có cảnh báo)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deviceId\": 1,\n  \"temperature\": 55.5,\n  \"humidity\": 60\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/iot/data",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "iot",
+            "data"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Lỗi validate (temperature = 999)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"deviceId\": 1,\n  \"temperature\": 999,\n  \"humidity\": 60\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/iot/data",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "iot",
+            "data"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Lỗi thiếu deviceId",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"temperature\": 30,\n  \"humidity\": 60\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/iot/data",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "iot",
+            "data"
+          ]
+        }
+      }
+    },
+    {
+      "name": "5. Lấy 20 điểm gần nhất",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/iot/data?deviceId=1",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "iot",
+            "data"
+          ],
+          "query": [
+            {
+              "key": "deviceId",
+              "value": "1"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

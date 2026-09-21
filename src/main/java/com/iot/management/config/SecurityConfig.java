@@ -6,6 +6,7 @@ import com.iot.management.security.JwtAuthenticationFilter;
 import com.iot.management.security.JwtTokenProvider;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -73,6 +74,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .and()
                 .authorizeRequests()
                     .antMatchers("/api/auth/**").permitAll()
+                    // --- Module IoT realtime (Đăng) ---
+                    .antMatchers(HttpMethod.POST, "/api/iot/data").permitAll()
+                    .antMatchers("/ws/**").permitAll()
                     .antMatchers("/", "/login", "/register", "/forgot-password", "/css/**", "/js/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/manager/**").hasAnyRole("ADMIN", "MANAGER")
