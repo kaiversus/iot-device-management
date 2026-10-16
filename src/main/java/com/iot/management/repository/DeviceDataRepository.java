@@ -16,4 +16,8 @@ public interface DeviceDataRepository extends JpaRepository<DeviceData, Long> {
 
     @Query("select count(distinct d.deviceId) from DeviceData d")
     long countDistinctDevices();
+List<DeviceData> findTop20ByDeviceIdInOrderByRecordedAtDescIdDesc(java.util.Collection<Long> ids);
+    long countByDeviceIdIn(java.util.Collection<Long> ids);
+    @Query("select count(distinct d.deviceId) from DeviceData d where d.deviceId in :ids")
+    long countReporting(@org.springframework.data.repository.query.Param("ids") java.util.Collection<Long> ids);
 }

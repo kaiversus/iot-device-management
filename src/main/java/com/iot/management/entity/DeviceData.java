@@ -1,14 +1,9 @@
 package com.iot.management.entity;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-/**
- * Dữ liệu cảm biến mà thiết bị IoT gửi về (nhiệt độ, độ ẩm).
- *
- * LƯU Ý: hiện chưa có entity Device (phần của Đạt) nên tạm lưu deviceId dạng số.
- * Khi Đạt merge xong, đổi thành @ManyToOne Device device (xem docs/DANG_HUONG_DAN.md).
- */
+/** Dữ liệu IoT gắn với ID thiết bị đã kiểm tra quyền sở hữu. */
 @Entity
 @Table(name = "device_data", indexes = @Index(name = "idx_device_time", columnList = "device_id, recorded_at"))
 public class DeviceData {
@@ -25,11 +20,11 @@ public class DeviceData {
     private Double humidity;
 
     @Column(name = "recorded_at", nullable = false)
-    private LocalDateTime recordedAt;
+    private Instant recordedAt;
 
     @PrePersist
     void onCreate() {
-        if (recordedAt == null) recordedAt = LocalDateTime.now();
+        if (recordedAt == null) recordedAt = Instant.now();
     }
 
     public DeviceData() {}
@@ -46,6 +41,6 @@ public class DeviceData {
     public Double getHumidity() { return humidity; }
     public void setHumidity(Double humidity) { this.humidity = humidity; }
 
-    public LocalDateTime getRecordedAt() { return recordedAt; }
-    public void setRecordedAt(LocalDateTime recordedAt) { this.recordedAt = recordedAt; }
+    public Instant getRecordedAt() { return recordedAt; }
+    public void setRecordedAt(Instant recordedAt) { this.recordedAt = recordedAt; }
 }

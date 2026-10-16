@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head th:fragment="head(title)">
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <title th:text="${title} + ' · IoT Hub'">IoT Hub</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link th:href="@{/css/app.css}" rel="stylesheet">
+</head>
+<body>
+<header th:fragment="header" class="app-header">
+    <nav class="navbar navbar-expand-md container" aria-label="Điều hướng chính">
+        <a class="navbar-brand fw-bold" th:href="@{/}"><span class="brand-mark">◈</span> IoT Hub</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Mở menu"><span class="navbar-toggler-icon"></span></button>
+        <div class="collapse navbar-collapse" id="mainNav">
+            <div class="navbar-nav me-auto"><a class="nav-link" th:href="@{/dashboard}" sec:authorize="isAuthenticated()">Dashboard realtime</a>
+                <a class="nav-link" th:href="@{/devices}" sec:authorize="hasAnyRole('USER','MANAGER','ADMIN')">Thiết bị</a>
+                <a class="nav-link" th:href="@{/categories}" sec:authorize="hasAnyRole('MANAGER','ADMIN')">Danh mục</a>
+            </div>
+            <div class="d-flex align-items-center gap-3 py-2">
+                <a sec:authorize="!isAuthenticated()" class="btn btn-outline-primary" th:href="@{/login}">Đăng nhập</a>
+                <a sec:authorize="!isAuthenticated()" class="btn btn-primary" th:href="@{/register}">Đăng ký</a>
+                <span class="account-name small" sec:authorize="isAuthenticated()" sec:authentication="name"></span>
+                <form sec:authorize="isAuthenticated()" th:action="@{/logout}" method="post"><button class="btn btn-sm btn-outline-secondary">Đăng xuất</button></form>
+            </div>
+        </div>
+    </nav>
+</header>
+<aside th:fragment="sidebar" class="workspace-nav mb-4" aria-label="Không gian làm việc">
+    <span class="eyebrow">KHÔNG GIAN LÀM VIỆC</span><a th:href="@{/devices}">Thiết bị của bạn</a>
+    <a th:href="@{/categories}" sec:authorize="hasAnyRole('MANAGER','ADMIN')">Quản lý danh mục</a>
+    <span class="badge text-bg-light ms-auto" sec:authorize="hasRole('ADMIN')">Quản trị viên · Toàn hệ thống</span>
+</aside>
+<div th:fragment="alerts" aria-live="polite">
+    <div th:if="${success}" class="alert alert-success" role="status" th:text="${success}"></div>
+    <div th:if="${error}" class="alert alert-danger" role="alert" th:text="${error}"></div>
+</div>
+<span th:fragment="status(value)" class="badge status-badge" th:classappend="${value.name() == 'ACTIVE' ? 'status-active' : (value.name() == 'MAINTENANCE' ? 'status-maintenance' : 'status-inactive')}" th:text="${value.name() == 'ACTIVE' ? 'Hoạt động' : (value.name() == 'MAINTENANCE' ? 'Bảo trì' : 'Ngừng hoạt động')}"></span>
+<footer th:fragment="footer" class="container app-footer"><span>◈ IoT Hub</span><span>Quản lý thiết bị · Kết nối dễ dàng</span></footer>
+<th:block th:fragment="scripts">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script th:src="@{/js/devices.js}" defer></script>
+</th:block>
+</body></html>

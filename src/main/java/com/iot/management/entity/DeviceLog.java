@@ -1,9 +1,9 @@
 package com.iot.management.entity;
 
 import javax.persistence.*;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
-/** Nhật ký sự kiện của thiết bị (hiện dùng để lưu các cảnh báo vượt ngưỡng). */
+/** Dữ liệu IoT gắn với ID thiết bị đã kiểm tra quyền sở hữu. */
 @Entity
 @Table(name = "device_logs")
 public class DeviceLog {
@@ -22,11 +22,11 @@ public class DeviceLog {
     private String message;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @PrePersist
     void onCreate() {
-        if (createdAt == null) createdAt = LocalDateTime.now();
+        if (createdAt == null) createdAt = Instant.now();
     }
 
     public DeviceLog() {}
@@ -41,5 +41,5 @@ public class DeviceLog {
     public Long getDeviceId() { return deviceId; }
     public String getLevel() { return level; }
     public String getMessage() { return message; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public Instant getCreatedAt() { return createdAt; }
 }

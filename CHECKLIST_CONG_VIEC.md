@@ -35,10 +35,11 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
 - [ ] Cấu hình phân quyền: Chặn các API theo role (Vd: chỉ Admin mới vào được `/api/admin/**`).
 
 ### 📦 Ngô Quang Đạt (Nhánh: `dat/device-crud`)
-- [ ] Map các Entity `Device`, `Category`.
-- [ ] Viết DeviceRepository, CategoryRepository.
-- [ ] Đăng ký API Key Cloudinary -> Viết class `CloudinaryService` dùng để upload ảnh.
-- [ ] Viết các API cho Thiết bị (CRUD):
+- [x] Map các Entity `Device`, `Category`.
+- [x] Viết DeviceRepository, CategoryRepository.
+- [x] Viết `CloudinaryService` upload, kiểm tra và dọn ảnh; cấu hình qua biến môi trường.
+- [x] Cấu hình tài khoản Cloudinary trên máy Đạt và kiểm thử upload, thay ảnh, xóa ảnh thật.
+- [x] Viết các API cho Thiết bị (CRUD):
   - `POST`: Thêm thiết bị (kèm upload ảnh lên Cloudinary).
   - `GET`: Lấy danh sách thiết bị (có phân trang và tìm kiếm theo tên).
   - `PUT`: Sửa thiết bị.
@@ -55,14 +56,14 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
 ## 📍 GIAI ĐOẠN 3: GHÉP GIAO DIỆN (FRONTEND) VÀO API (Tuần 4)
 *Mục tiêu: Mọi người ghép API của mình lên giao diện Thymeleaf (Có thể làm chung 1 nhánh `dev` hoặc làm trên nhánh riêng).*
 
-- [ ] **Bảo:** 
+- [ ] **Bảo:**
   - Ghép giao diện trang Login, Register, Quên mật khẩu.
   - Sử dụng thẻ `sec:authorize="hasRole('ADMIN')"` trên file html để ẩn/hiện menu tương ứng với role.
-- [ ] **Đạt:** 
+- [ ] **Đạt:**
   - Dùng vòng lặp `th:each` hiển thị danh sách thiết bị dạng bảng.
   - Xử lý form Thêm mới / Cập nhật thiết bị bằng HTML.
   - Code thanh phân trang (Pagination) và thanh tìm kiếm.
-- [ ] **Đăng:** 
+- [ ] **Đăng:**
   - Tạo trang Dashboard thống kê (Vd: có bao nhiêu thiết bị, trạng thái bật/tắt).
   - Tích hợp thư viện Chart.js vẽ biểu đồ dữ liệu thiết bị.
   - Code file `app.js` phía Client (Dùng `SockJS`, `STOMP`) để lắng nghe Websocket -> Nếu có tin nhắn tới thì hiển thị thông báo Toast / Alert lên màn hình (Ví dụ: "Cảnh báo: Nhiệt độ thiết bị 1 đang quá cao!").
@@ -84,3 +85,20 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
   - **Đạt:** Viết sơ đồ Database, thiết kế giao diện, luồng xử lý ảnh Cloudinary.
   - **Đăng:** Viết luồng thu thập dữ liệu bằng Postman, giao thức Websocket, thiết kế Dashboard.
 - [ ] **Bước 5: Tổng duyệt:** Quay 1 video demo ngắn phòng hờ rủi ro hôm bảo vệ mạng yếu. Chuẩn bị sẵn bộ Postman Collection để GV hỏi thì bật lên bắn request liền.
+
+## Bàn giao module Đạt
+- [x] Fragment header/điều hướng/footer, giao diện danh sách, thêm/sửa, chi tiết, tìm kiếm, phân trang và quản lý danh mục.
+- [x] Test tích hợp, báo cáo và Postman Collection: xem [docs/DAT_DEVICE_MODULE.md](docs/DAT_DEVICE_MODULE.md).
+
+
+## Cập nhật phần Nguyễn Viết Đăng — bản tích hợp
+- [x] Entity DeviceData, lưu nhiệt độ/độ ẩm/thời gian UTC.
+- [x] POST /api/iot/data, validation, kiểm tra ID thiết bị và quyền sở hữu.
+- [x] WebSocket STOMP, cảnh báo >50°C, cooldown theo dữ liệu đã lưu.
+- [x] Dashboard thống kê tổng thiết bị, bật/tắt/bảo trì, bản ghi, cảnh báo.
+- [x] Chart.js, SockJS/STOMP, toast, lọc ID, tải lại lịch sử khi nối lại.
+- [x] Ghép code main/Bảo/Đạt vào nhánh local dang/integration-complete.
+- [x] Test tự động IoT và phân quyền; Postman collection; hướng dẫn mô phỏng và nội dung báo cáo Markdown.
+- [ ] Kiểm thử thực tế MySQL, email OTP, Cloudinary và trình duyệt.
+- [ ] Chuyển nội dung báo cáo sang mẫu Word của nhóm; quay video demo.
+- [ ] Push nhánh và tạo PR vào main sau khi nhóm rà soát.

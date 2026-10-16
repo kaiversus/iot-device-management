@@ -4,6 +4,9 @@ import com.iot.management.security.CustomUserDetailsService;
 import com.iot.management.security.JwtAuthenticationEntryPoint;
 import com.iot.management.security.JwtAuthenticationFilter;
 import com.iot.management.security.JwtTokenProvider;
+import com.iot.management.security.DeviceCsrfMatcher;
+import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.HttpMethod;
@@ -65,9 +68,22 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .cors()
                     .and()
                 .csrf()
-                    .disable()
+                    .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())
+                    // JWT is authenticated on every request, including static assets.
+                    // Do not rotate the CSRF cookie as if each request were a new login.
+                    .sessionAuthenticationStrategy(new NullAuthenticatedSessionStrategy())
+                    .requireCsrfProtectionMatcher(new DeviceCsrfMatcher())
+                    .and()
                 .exceptionHandling()
-                    .authenticationEntryPoint(unauthorizedHandler)
+                    .authenticationEntryPoint((request, response, exception) -> {
+                        String path = request.getRequestURI().substring(request.getContextPath().length());
+                        if (path.equals("/devices") || path.startsWith("/devices/")
+                                || path.equals("/categories") || path.startsWith("/categories/")) {
+                            response.sendRedirect(request.getContextPath() + "/login");
+                        } else {
+                            unauthorizedHandler.commence(request, response, exception);
+                        }
+                    })
                     .and()
                 .sessionManagement()
                     .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
@@ -75,11 +91,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authorizeRequests()
                     .antMatchers("/api/auth/**").permitAll()
                     // --- Module IoT realtime (Đăng) ---
-                    .antMatchers(HttpMethod.POST, "/api/iot/data").permitAll()
-                    .antMatchers("/ws/**").permitAll()
+                    .antMatchers("/api/iot/**").authenticated()
+                    .antMatchers("/ws/**").authenticated()
                     .antMatchers("/", "/login", "/register", "/forgot-password", "/css/**", "/js/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/manager/**").hasAnyRole("ADMIN", "MANAGER")
+                    .antMatchers("/categories/**").hasAnyRole("ADMIN", "MANAGER")
+                    .antMatchers("/devices/**", "/api/devices/**", "/api/categories/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                     .anyRequest().authenticated()
                     .and()
                 .logout()

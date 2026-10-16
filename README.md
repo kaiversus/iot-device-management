@@ -18,7 +18,7 @@ A project to develop a web system for managing IoT devices, supporting real-time
 
 ---
 
-## 2. Các Vai Trò (Roles) & Chức Năng Cốt Lõi 
+## 2. Các Vai Trò (Roles) & Chức Năng Cốt Lõi
 Hệ thống sử dụng 4 roles cơ bản để phục vụ nghiệp vụ Quản lý IoT:
 1. **Guest:** Xem trang chủ (hiển thị thông tin chung), đăng ký tài khoản (gửi OTP email), quên mật khẩu (nhận OTP email).
 2. **User:** Đăng nhập/Đăng xuất, quản lý thông tin cá nhân, quản lý danh sách thiết bị IoT của mình, xem biểu đồ lịch sử hoạt động, nhận cảnh báo realtime qua Websocket.
@@ -49,7 +49,7 @@ Hệ thống sử dụng 4 roles cơ bản để phục vụ nghiệp vụ Quả
 ## 4. Prerequisites
 
 To run this project, team members need to install the following software:
-1. **JDK 26** (hoặc tương thích bản Java của nhóm): Java runtime environment.
+1. **JDK 17**: Phiên bản đang được cấu hình trong `pom.xml`.
 2. **MySQL Server & MySQL Workbench** (or DBeaver/Navicat): To store and view data.
 3. **Eclipse (Enterprise Java and Web Developer)** / Spring Tool Suite (STS).
 4. **Git**: For source code management.
@@ -58,6 +58,15 @@ To run this project, team members need to install the following software:
 ---
 
 ## 5. Installation & Environment Setup Guide
+
+### Module của Đạt: Device Management & UI
+
+Đã bổ sung CRUD thiết bị/danh mục, tìm kiếm, phân trang, upload Cloudinary và giao diện Thymeleaf + Bootstrap.
+Xem [hướng dẫn chạy, API, phân quyền và báo cáo module](docs/DAT_DEVICE_MODULE.md).
+Import [Postman Collection](docs/Dat_Device_Management.postman_collection.json) để thử API.
+Chạy kiểm thử bằng `mvn test`; truy cập `/devices` sau đăng nhập, `/categories` với Manager/Admin.
+Cloudinary dùng các biến `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`;
+khi chưa cấu hình vẫn dùng được thiết bị không kèm ảnh.
 
 Initially, configure the core parts for basic operation following the teacher's video tutorial: [Youtube Video Link](https://www.youtube.com/watch?v=koL1_6OXjl0&list=PL0yFty_aTOFM_6P9Tu9AJN6UOJDpr-uFU)
 
@@ -122,3 +131,7 @@ The `action_type` (prefix) is defined as follows:
 - [ ] **1 điểm:** Giao diện đẹp, dễ sử dụng và Responsive (Bootstrap).
 - [ ] **1 điểm:** Chức năng sáng tạo (Websocket realtime notification, JWT, Upload ảnh Cloudinary).
 - [ ] **0.5 điểm:** Khả năng báo cáo và trả lời phản biện (Mỗi thành viên report theo module/role của mình).
+
+
+## Bản tích hợp IoT Dashboard của Nguyễn Viết Đăng
+Xem [hướng dẫn chạy, demo và nội dung báo cáo](docs/DANG_HUONG_DAN.md) và import `docs/Dang_IoT_Dashboard.postman_collection.json`. API IoT yêu cầu đăng nhập và quyền sở hữu thiết bị.

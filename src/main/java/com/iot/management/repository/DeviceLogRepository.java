@@ -12,4 +12,6 @@ public interface DeviceLogRepository extends JpaRepository<DeviceLog, Long> {
     List<DeviceLog> findTop10ByOrderByCreatedAtDesc();
 
     long countByLevel(String level);
+List<DeviceLog> findTop10ByDeviceIdInOrderByCreatedAtDescIdDesc(java.util.Collection<Long> ids);
+    long countByDeviceIdInAndLevel(java.util.Collection<Long> ids, String level);
 }

@@ -8,6 +8,7 @@ import javax.validation.constraints.NotNull;
 public class IotDataRequest {
 
     @NotNull(message = "deviceId không được để trống")
+    @javax.validation.constraints.Positive
     private Long deviceId;
 
     @NotNull(message = "temperature không được để trống")

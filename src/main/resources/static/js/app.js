@@ -2,6 +2,9 @@
 (function () {
   const MAX_POINTS = 20;
   const $ = (id) => document.getElementById(id);
+  let historyVersion = 0;
+  const topic = document.body.dataset.admin === "true" ? "/topic/" : "/user/queue/";
+  function loadError() { $("loadError").textContent = "Không tải được dữ liệu. Kiểm tra kết nối hoặc đăng nhập lại."; $("loadError").classList.remove("d-none"); }
   let filterId = null; // null = tất cả thiết bị
 
   // ---------- Biểu đồ ----------
@@ -32,30 +35,36 @@
   }
 
   function loadHistory() {
+    const version = ++historyVersion;
     const url = '/api/iot/data' + (filterId !== null ? '?deviceId=' + filterId : '');
     fetch(url, { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : []))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
       .then((list) => {
+        if (version !== historyVersion) return;
         chart.data.labels = list.map((d) => timeLabel(d.recordedAt));
         chart.data.datasets[0].data = list.map((d) => d.temperature);
         chart.data.datasets[1].data = list.map((d) => d.humidity);
         chart.update();
       })
-      .catch(() => {});
+      .catch(loadError);
   }
 
   // ---------- Thống kê + bảng cảnh báo ----------
   function loadStats() {
     fetch('/api/iot/stats', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : null))
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
       .then((s) => {
         if (!s) return;
         $('statDevices').textContent = s.reportingDevices;
+        $('statTotal').textContent = s.totalDevices;
+        $('statActive').textContent = s.activeDevices;
+        $('statInactive').textContent = s.inactiveDevices;
+        $('statMaintenance').textContent = s.maintenanceDevices;
         $('statRecords').textContent = s.totalRecords;
         $('statAlerts').textContent = s.totalAlerts;
         $('statThreshold').textContent = s.threshold;
       })
-      .catch(() => {});
+      .catch(loadError);
   }
 
   function renderAlertRow(a) {
@@ -73,9 +82,9 @@
 
   function loadAlerts() {
     fetch('/api/iot/logs', { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : []))
-      .then((logs) => logs.slice().reverse().forEach(renderAlertRow))
-      .catch(() => {});
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
+      .then((logs) => { $('alertBody').replaceChildren(); logs.slice().reverse().forEach(renderAlertRow); })
+      .catch(loadError);
   }
 
   // ---------- Toast ----------
@@ -99,9 +108,11 @@
     stomp.debug = null; // tắt log STOMP trong console
     stomp.connect({}, () => {
       setStatus(true);
-      stomp.subscribe('/topic/data', (m) => { addPoint(JSON.parse(m.body)); loadStats(); });
-      stomp.subscribe('/topic/alerts', (m) => {
+      loadHistory(); loadStats(); loadAlerts();
+      stomp.subscribe(topic + 'data', (m) => { addPoint(JSON.parse(m.body)); loadStats(); });
+      stomp.subscribe(topic + 'alerts', (m) => {
         const a = JSON.parse(m.body);
+        loadStats();
         showToast(a.message);
         renderAlertRow(a);
       });
@@ -113,6 +124,7 @@
 
   $('deviceFilter').addEventListener('change', (e) => {
     const v = e.target.value.trim();
+    if (v !== '' && (!Number.isSafeInteger(Number(v)) || Number(v) < 1)) return;
     filterId = v === '' ? null : Number(v);
     loadHistory();
   });

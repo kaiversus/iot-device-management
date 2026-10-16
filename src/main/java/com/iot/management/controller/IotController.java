@@ -22,7 +22,7 @@ public class IotController {
         this.service = service;
     }
 
-    /** Postman / thiết bị giả lập gửi dữ liệu về (công khai, xem SecurityConfig). */
+    /** Postman / thiết bị giả lập gửi dữ liệu về (cần JWT và quyền sở hữu thiết bị). */
     @PostMapping("/data")
     public ResponseEntity<Map<String, Object>> receive(@Valid @RequestBody IotDataRequest req) {
         DeviceData saved = service.save(req);
