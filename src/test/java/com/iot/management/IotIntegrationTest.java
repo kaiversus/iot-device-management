@@ -52,6 +52,7 @@ class IotIntegrationTest {
   mvc.perform(post("/api/iot/data").with(user(owner)).with(csrf()).contentType("application/json").content(payload(151))).andExpect(status().isBadRequest());
   mvc.perform(post("/api/iot/data").with(user(owner)).with(csrf()).contentType("application/json").content("{\"deviceId\":999999,\"temperature\":25,\"humidity\":60}")).andExpect(status().isNotFound());
   send(60);
+  mvc.perform(get("/api/iot/logs").with(user(owner))).andExpect(status().isOk()).andExpect(content().contentType("application/json;charset=UTF-8")).andExpect(jsonPath("$[0].message").value(org.hamcrest.Matchers.containsString("Cảnh báo:")));
   mvc.perform(get("/api/iot/data").with(user(other))).andExpect(content().json("[]"));
   mvc.perform(get("/api/iot/logs").with(user(other))).andExpect(content().json("[]"));
   mvc.perform(get("/api/iot/data").param("deviceId",id.toString()).with(user(other))).andExpect(status().isNotFound());

@@ -13,7 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/iot")
+@RequestMapping(value = "/api/iot", produces = "application/json;charset=UTF-8")
 public class IotController {
 
     private final DeviceDataService service;
