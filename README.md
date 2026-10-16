@@ -49,7 +49,7 @@ Hệ thống sử dụng 4 roles cơ bản để phục vụ nghiệp vụ Quả
 ## 4. Prerequisites
 
 To run this project, team members need to install the following software:
-1. **JDK 26** (hoặc tương thích bản Java của nhóm): Java runtime environment.
+1. **JDK 17**: Phiên bản đang được cấu hình trong `pom.xml`.
 2. **MySQL Server & MySQL Workbench** (or DBeaver/Navicat): To store and view data.
 3. **Eclipse (Enterprise Java and Web Developer)** / Spring Tool Suite (STS).
 4. **Git**: For source code management.
@@ -58,6 +58,15 @@ To run this project, team members need to install the following software:
 ---
 
 ## 5. Installation & Environment Setup Guide
+
+### Module của Đạt: Device Management & UI
+
+Đã bổ sung CRUD thiết bị/danh mục, tìm kiếm, phân trang, upload Cloudinary và giao diện Thymeleaf + Bootstrap.
+Xem [hướng dẫn chạy, API, phân quyền và báo cáo module](docs/DAT_DEVICE_MODULE.md).
+Import [Postman Collection](docs/Dat_Device_Management.postman_collection.json) để thử API.
+Chạy kiểm thử bằng `mvn test`; truy cập `/devices` sau đăng nhập, `/categories` với Manager/Admin.
+Cloudinary dùng các biến `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`;
+khi chưa cấu hình vẫn dùng được thiết bị không kèm ảnh.
 
 Initially, configure the core parts for basic operation following the teacher's video tutorial: [Youtube Video Link](https://www.youtube.com/watch?v=koL1_6OXjl0&list=PL0yFty_aTOFM_6P9Tu9AJN6UOJDpr-uFU)
 
