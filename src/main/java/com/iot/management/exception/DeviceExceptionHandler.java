@@ -18,7 +18,7 @@ import java.util.*;
 
 @Order(-10)
 @ControllerAdvice(assignableTypes = {DeviceController.class, DeviceWebController.class,
-    CategoryController.class, CategoryWebController.class})
+    CategoryController.class, CategoryWebController.class, IotController.class})
 public class DeviceExceptionHandler {
     @ExceptionHandler(DeviceException.class)
     public Object domain(DeviceException ex, HttpServletRequest request) { return error(ex.getStatus(), ex.getMessage(), request); }

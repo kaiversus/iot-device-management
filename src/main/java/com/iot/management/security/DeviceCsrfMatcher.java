@@ -9,7 +9,7 @@ import java.util.Set;
 public class DeviceCsrfMatcher implements RequestMatcher {
     @Override public boolean matches(HttpServletRequest request) {
         if (Set.of("GET", "HEAD", "OPTIONS", "TRACE").contains(request.getMethod())) return false;
-        boolean module = Arrays.stream(new String[]{"/devices", "/categories", "/api/devices", "/api/categories"})
+        boolean module = Arrays.stream(new String[]{"/devices", "/categories", "/api/devices", "/api/categories", "/api/iot"})
             .anyMatch(prefix -> requestPath(request).equals(prefix) || requestPath(request).startsWith(prefix + "/"));
         if (!module) return false;
         String authorization = request.getHeader("Authorization");

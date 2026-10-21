@@ -56,14 +56,14 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
 ## 📍 GIAI ĐOẠN 3: GHÉP GIAO DIỆN (FRONTEND) VÀO API (Tuần 4)
 *Mục tiêu: Mọi người ghép API của mình lên giao diện Thymeleaf (Có thể làm chung 1 nhánh `dev` hoặc làm trên nhánh riêng).*
 
-- [ ] **Bảo:** 
+- [ ] **Bảo:**
   - Ghép giao diện trang Login, Register, Quên mật khẩu.
   - Sử dụng thẻ `sec:authorize="hasRole('ADMIN')"` trên file html để ẩn/hiện menu tương ứng với role.
-- [ ] **Đạt:** 
+- [ ] **Đạt:**
   - Dùng vòng lặp `th:each` hiển thị danh sách thiết bị dạng bảng.
   - Xử lý form Thêm mới / Cập nhật thiết bị bằng HTML.
   - Code thanh phân trang (Pagination) và thanh tìm kiếm.
-- [ ] **Đăng:** 
+- [ ] **Đăng:**
   - Tạo trang Dashboard thống kê (Vd: có bao nhiêu thiết bị, trạng thái bật/tắt).
   - Tích hợp thư viện Chart.js vẽ biểu đồ dữ liệu thiết bị.
   - Code file `app.js` phía Client (Dùng `SockJS`, `STOMP`) để lắng nghe Websocket -> Nếu có tin nhắn tới thì hiển thị thông báo Toast / Alert lên màn hình (Ví dụ: "Cảnh báo: Nhiệt độ thiết bị 1 đang quá cao!").
@@ -89,3 +89,16 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
 ## Bàn giao module Đạt
 - [x] Fragment header/điều hướng/footer, giao diện danh sách, thêm/sửa, chi tiết, tìm kiếm, phân trang và quản lý danh mục.
 - [x] Test tích hợp, báo cáo và Postman Collection: xem [docs/DAT_DEVICE_MODULE.md](docs/DAT_DEVICE_MODULE.md).
+
+
+## Cập nhật phần Nguyễn Viết Đăng — bản tích hợp
+- [x] Entity DeviceData, lưu nhiệt độ/độ ẩm/thời gian UTC.
+- [x] POST /api/iot/data, validation, kiểm tra ID thiết bị và quyền sở hữu.
+- [x] WebSocket STOMP, cảnh báo >50°C, cooldown theo dữ liệu đã lưu.
+- [x] Dashboard thống kê tổng thiết bị, bật/tắt/bảo trì, bản ghi, cảnh báo.
+- [x] Chart.js, SockJS/STOMP, toast, lọc ID, tải lại lịch sử khi nối lại.
+- [x] Ghép code main/Bảo/Đạt vào nhánh local dang/integration-complete.
+- [x] Test tự động IoT và phân quyền; Postman collection; hướng dẫn mô phỏng và nội dung báo cáo Markdown.
+- [ ] Kiểm thử thực tế MySQL, email OTP, Cloudinary và trình duyệt.
+- [ ] Chuyển nội dung báo cáo sang mẫu Word của nhóm; quay video demo.
+- [ ] Push nhánh và tạo PR vào main sau khi nhóm rà soát.

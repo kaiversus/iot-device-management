@@ -38,3 +38,5 @@ build/
 # Local database credentials and application logs
 /config/application-local.properties
 /.local/
+
+/build-test.log

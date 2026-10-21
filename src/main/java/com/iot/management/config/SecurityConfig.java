@@ -9,6 +9,7 @@ import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
 import org.springframework.security.web.authentication.session.NullAuthenticatedSessionStrategy;
 
 import org.springframework.context.annotation.Bean;
+import org.springframework.http.HttpMethod;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
@@ -89,6 +90,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .and()
                 .authorizeRequests()
                     .antMatchers("/api/auth/**").permitAll()
+                    // --- Module IoT realtime (Đăng) ---
+                    .antMatchers("/api/iot/**").authenticated()
+                    .antMatchers("/ws/**").authenticated()
                     .antMatchers("/", "/login", "/register", "/forgot-password", "/css/**", "/js/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/manager/**").hasAnyRole("ADMIN", "MANAGER")

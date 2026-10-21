@@ -18,7 +18,7 @@ A project to develop a web system for managing IoT devices, supporting real-time
 
 ---
 
-## 2. Các Vai Trò (Roles) & Chức Năng Cốt Lõi 
+## 2. Các Vai Trò (Roles) & Chức Năng Cốt Lõi
 Hệ thống sử dụng 4 roles cơ bản để phục vụ nghiệp vụ Quản lý IoT:
 1. **Guest:** Xem trang chủ (hiển thị thông tin chung), đăng ký tài khoản (gửi OTP email), quên mật khẩu (nhận OTP email).
 2. **User:** Đăng nhập/Đăng xuất, quản lý thông tin cá nhân, quản lý danh sách thiết bị IoT của mình, xem biểu đồ lịch sử hoạt động, nhận cảnh báo realtime qua Websocket.
@@ -131,3 +131,7 @@ The `action_type` (prefix) is defined as follows:
 - [ ] **1 điểm:** Giao diện đẹp, dễ sử dụng và Responsive (Bootstrap).
 - [ ] **1 điểm:** Chức năng sáng tạo (Websocket realtime notification, JWT, Upload ảnh Cloudinary).
 - [ ] **0.5 điểm:** Khả năng báo cáo và trả lời phản biện (Mỗi thành viên report theo module/role của mình).
+
+
+## Bản tích hợp IoT Dashboard của Nguyễn Viết Đăng
+Xem [hướng dẫn chạy, demo và nội dung báo cáo](docs/DANG_HUONG_DAN.md) và import `docs/Dang_IoT_Dashboard.postman_collection.json`. API IoT yêu cầu đăng nhập và quyền sở hữu thiết bị.

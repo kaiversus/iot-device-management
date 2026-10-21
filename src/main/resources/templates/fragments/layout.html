@@ -12,7 +12,7 @@
         <a class="navbar-brand fw-bold" th:href="@{/}"><span class="brand-mark">◈</span> IoT Hub</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Mở menu"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="mainNav">
-            <div class="navbar-nav me-auto">
+            <div class="navbar-nav me-auto"><a class="nav-link" th:href="@{/dashboard}" sec:authorize="isAuthenticated()">Dashboard realtime</a>
                 <a class="nav-link" th:href="@{/devices}" sec:authorize="hasAnyRole('USER','MANAGER','ADMIN')">Thiết bị</a>
                 <a class="nav-link" th:href="@{/categories}" sec:authorize="hasAnyRole('MANAGER','ADMIN')">Danh mục</a>
             </div>
