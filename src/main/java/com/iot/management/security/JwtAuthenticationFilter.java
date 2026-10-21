@@ -52,6 +52,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     private String getJwtFromRequest(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        if (StringUtils.hasText(authorization) && authorization.startsWith("Bearer ")) {
+            return authorization.substring(7);
+        }
         if (request.getCookies() != null) {
             for (javax.servlet.http.Cookie cookie : request.getCookies()) {
                 if ("jwt_token".equals(cookie.getName())) {

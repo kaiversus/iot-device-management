@@ -35,10 +35,11 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
 - [ ] Cấu hình phân quyền: Chặn các API theo role (Vd: chỉ Admin mới vào được `/api/admin/**`).
 
 ### 📦 Ngô Quang Đạt (Nhánh: `dat/device-crud`)
-- [ ] Map các Entity `Device`, `Category`.
-- [ ] Viết DeviceRepository, CategoryRepository.
-- [ ] Đăng ký API Key Cloudinary -> Viết class `CloudinaryService` dùng để upload ảnh.
-- [ ] Viết các API cho Thiết bị (CRUD):
+- [x] Map các Entity `Device`, `Category`.
+- [x] Viết DeviceRepository, CategoryRepository.
+- [x] Viết `CloudinaryService` upload, kiểm tra và dọn ảnh; cấu hình qua biến môi trường.
+- [x] Cấu hình tài khoản Cloudinary trên máy Đạt và kiểm thử upload, thay ảnh, xóa ảnh thật.
+- [x] Viết các API cho Thiết bị (CRUD):
   - `POST`: Thêm thiết bị (kèm upload ảnh lên Cloudinary).
   - `GET`: Lấy danh sách thiết bị (có phân trang và tìm kiếm theo tên).
   - `PUT`: Sửa thiết bị.
@@ -84,3 +85,7 @@ Dưới đây là roadmap chi tiết từng bước (Step-by-step) dành cho 3 t
   - **Đạt:** Viết sơ đồ Database, thiết kế giao diện, luồng xử lý ảnh Cloudinary.
   - **Đăng:** Viết luồng thu thập dữ liệu bằng Postman, giao thức Websocket, thiết kế Dashboard.
 - [ ] **Bước 5: Tổng duyệt:** Quay 1 video demo ngắn phòng hờ rủi ro hôm bảo vệ mạng yếu. Chuẩn bị sẵn bộ Postman Collection để GV hỏi thì bật lên bắn request liền.
+
+## Bàn giao module Đạt
+- [x] Fragment header/điều hướng/footer, giao diện danh sách, thêm/sửa, chi tiết, tìm kiếm, phân trang và quản lý danh mục.
+- [x] Test tích hợp, báo cáo và Postman Collection: xem [docs/DAT_DEVICE_MODULE.md](docs/DAT_DEVICE_MODULE.md).
