@@ -1,102 +1,23 @@
 package com.iot.management.controller;
-
 import com.iot.management.dto.*;
 import com.iot.management.service.AuthService;
-
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
-
 import javax.validation.Valid;
-import java.util.HashMap;
 import java.util.Map;
-
-@RestController
-@RequestMapping("/api/auth")
+@RestController @RequestMapping("/api/auth")
 public class AuthController {
-
-    private final AuthService authService;
-
-    public AuthController(AuthService authService) {
-        this.authService = authService;
-    }
-
-    @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody LoginRequest loginRequest, javax.servlet.http.HttpServletResponse responseCookie) {
-        try {
-            String jwt = authService.authenticateUser(loginRequest);
-            
-            javax.servlet.http.Cookie cookie = new javax.servlet.http.Cookie("jwt_token", jwt);
-            cookie.setHttpOnly(true);
-            cookie.setPath("/");
-            cookie.setMaxAge(24 * 60 * 60); // 1 day
-            // cookie.setSecure(true); // Enable in production with HTTPS
-            
-            responseCookie.addCookie(cookie);
-            
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Login successful");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", "Invalid credentials");
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
-        }
-    }
-
-    @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody RegisterRequest registerRequest) {
-        try {
-            authService.registerUser(registerRequest);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "User registered successfully! Please check your email for OTP.");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
-        try {
-            authService.processForgotPassword(request.getEmail());
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "OTP sent to your email!");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @PostMapping("/reset-password")
-    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
-        try {
-            authService.resetPassword(request);
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Password reset successfully!");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
-
-    @PostMapping("/verify-account")
-    public ResponseEntity<?> verifyAccount(@RequestBody Map<String, String> request) {
-        try {
-            authService.verifyAccount(request.get("email"), request.get("otpCode"));
-            Map<String, String> response = new HashMap<>();
-            response.put("message", "Account verified successfully! You can now login.");
-            return ResponseEntity.ok(response);
-        } catch (Exception e) {
-            Map<String, String> response = new HashMap<>();
-            response.put("error", e.getMessage());
-            return ResponseEntity.badRequest().body(response);
-        }
-    }
+ private final AuthService service;
+ @org.springframework.beans.factory.annotation.Value("${app.cookie-secure:false}") private boolean secure;
+ public AuthController(AuthService service) {this.service=service;}
+ @PostMapping("/login") public ResponseEntity<?> login(@Valid @RequestBody LoginRequest r) {
+  String jwt=service.authenticateUser(r);
+  return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE,ResponseCookie.from("jwt_token",jwt).httpOnly(true).secure(secure).sameSite("Lax").path("/").maxAge(86400).build().toString()).body(Map.of("message","Đăng nhập thành công"));
+ }
+ @PostMapping("/register") public Map<String,String> register(@Valid @RequestBody RegisterRequest r) {service.registerUser(r);return ok("Đã gửi OTP xác thực. Mã có hiệu lực 5 phút.");}
+ @PostMapping("/resend-verification") public Map<String,String> resend(@Valid @RequestBody ForgotPasswordRequest r) {service.resendVerification(r.getEmail());return ok("Đã gửi lại OTP xác thực.");}
+ @PostMapping("/forgot-password") public Map<String,String> forgot(@Valid @RequestBody ForgotPasswordRequest r) {service.processForgotPassword(r.getEmail());return ok("Đã gửi OTP đặt lại mật khẩu.");}
+ @PostMapping("/reset-password") public Map<String,String> reset(@Valid @RequestBody ResetPasswordRequest r) {service.resetPassword(r);return ok("Đã đổi mật khẩu. Vui lòng đăng nhập lại.");}
+ @PostMapping("/verify-account") public Map<String,String> verify(@Valid @RequestBody VerifyRequest r) {service.verifyAccount(r.email,r.otpCode);return ok("Đã xác thực tài khoản. Bạn có thể đăng nhập.");}
+ private Map<String,String> ok(String message) {return Map.of("message",message);}
 }

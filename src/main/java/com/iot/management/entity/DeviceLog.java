@@ -14,6 +14,10 @@ public class DeviceLog {
 
     @Column(name = "device_id", nullable = false)
     private Long deviceId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="device_id", insertable=false, updatable=false, foreignKey=@ForeignKey(name="fk_devicelog_device"))
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Device device;
 
     @Column(length = 20, nullable = false)
     private String level; // INFO | WARNING | ERROR

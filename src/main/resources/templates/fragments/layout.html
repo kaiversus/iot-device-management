@@ -5,6 +5,7 @@
     <title th:text="${title} + ' · IoT Hub'">IoT Hub</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link th:href="@{/css/app.css}" rel="stylesheet">
+    <script th:src="@{/js/security.js}"></script>
 </head>
 <body>
 <header th:fragment="header" class="app-header">
@@ -13,6 +14,9 @@
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Mở menu"><span class="navbar-toggler-icon"></span></button>
         <div class="collapse navbar-collapse" id="mainNav">
             <div class="navbar-nav me-auto"><a class="nav-link" th:href="@{/dashboard}" sec:authorize="isAuthenticated()">Dashboard realtime</a>
+                <a class="nav-link" th:href="@{/account}" sec:authorize="isAuthenticated()">Tài khoản</a>
+                <a class="nav-link" th:href="@{/management/users}" sec:authorize="hasAnyRole('MANAGER','ADMIN')">Người dùng</a>
+                <a class="nav-link" th:href="@{/admin/settings}" sec:authorize="hasRole('ADMIN')">Quản trị</a>
                 <a class="nav-link" th:href="@{/devices}" sec:authorize="hasAnyRole('USER','MANAGER','ADMIN')">Thiết bị</a>
                 <a class="nav-link" th:href="@{/categories}" sec:authorize="hasAnyRole('MANAGER','ADMIN')">Danh mục</a>
             </div>

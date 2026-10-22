@@ -14,6 +14,10 @@ public class DeviceData {
 
     @Column(name = "device_id", nullable = false)
     private Long deviceId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="device_id", insertable=false, updatable=false, foreignKey=@ForeignKey(name="fk_devicedata_device"))
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    private Device device;
 
     private Double temperature;
 

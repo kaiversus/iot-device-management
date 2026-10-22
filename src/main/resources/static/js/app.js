@@ -3,6 +3,7 @@
   const MAX_POINTS = 20;
   const $ = (id) => document.getElementById(id);
   let historyVersion = 0;
+  let livePoints = [];
   const topic = document.body.dataset.admin === "true" ? "/topic/" : "/user/queue/";
   function loadError() { $("loadError").textContent = "Không tải được dữ liệu. Kiểm tra kết nối hoặc đăng nhập lại."; $("loadError").classList.remove("d-none"); }
   let filterId = null; // null = tất cả thiết bị
@@ -22,31 +23,29 @@
 
   function timeLabel(iso) { return new Date(iso).toLocaleTimeString(); }
 
-  function addPoint(p) {
-    if (filterId !== null && Number(p.deviceId) !== filterId) return;
-    chart.data.labels.push(timeLabel(p.time));
-    chart.data.datasets[0].data.push(p.temperature);
-    chart.data.datasets[1].data.push(p.humidity);
-    if (chart.data.labels.length > MAX_POINTS) {
-      chart.data.labels.shift();
-      chart.data.datasets.forEach((ds) => ds.data.shift());
-    }
+  function render(points) {
+    const unique = new Map(points.map(p => [p.id, p]));
+    const list = [...unique.values()].filter(p => filterId === null || Number(p.deviceId) === filterId)
+      .sort((a,b) => new Date(a.recordedAt || a.time)-new Date(b.recordedAt || b.time) || a.id-b.id).slice(-MAX_POINTS);
+    chart.data.labels=list.map(p=>timeLabel(p.recordedAt || p.time));
+    chart.data.datasets[0].data=list.map(p=>p.temperature);
+    chart.data.datasets[1].data=list.map(p=>p.humidity);
     chart.update();
+    return list;
   }
-
+  let shown = [];
+  function addPoint(p) {
+    livePoints.push(p); livePoints=livePoints.slice(-200);
+    shown=render([...shown,p]);
+  }
   function loadHistory() {
     const version = ++historyVersion;
-    const url = '/api/iot/data' + (filterId !== null ? '?deviceId=' + filterId : '');
-    fetch(url, { credentials: 'same-origin' })
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
-      .then((list) => {
-        if (version !== historyVersion) return;
-        chart.data.labels = list.map((d) => timeLabel(d.recordedAt));
-        chart.data.datasets[0].data = list.map((d) => d.temperature);
-        chart.data.datasets[1].data = list.map((d) => d.humidity);
-        chart.update();
-      })
-      .catch(loadError);
+    livePoints=[]; shown=[]; render([]);
+    const url='/api/iot/data'+(filterId!==null?'?deviceId='+filterId:'');
+    fetch(url,{credentials:'same-origin'})
+      .then(r=>r.ok?r.json():Promise.reject(new Error(r.status)))
+      .then(list=>{if(version!==historyVersion)return;shown=render([...list,...livePoints]);$('loadError').classList.add('d-none');})
+      .catch(()=>{if(version===historyVersion)loadError();});
   }
 
   // ---------- Thống kê + bảng cảnh báo ----------
@@ -83,7 +82,7 @@
   function loadAlerts() {
     fetch('/api/iot/logs', { credentials: 'same-origin' })
       .then((r) => (r.ok ? r.json() : Promise.reject(new Error(r.status))))
-      .then((logs) => { $('alertBody').replaceChildren(); logs.slice().reverse().forEach(renderAlertRow); })
+      .then((logs) => { $('alertBody').replaceChildren(); logs.slice().reverse().forEach(renderAlertRow); if(!logs.length){const tr=document.createElement('tr');const td=document.createElement('td');td.colSpan=3;td.textContent='Chưa có cảnh báo';tr.append(td);$('alertBody').append(tr);} })
       .catch(loadError);
   }
 
@@ -108,7 +107,6 @@
     stomp.debug = null; // tắt log STOMP trong console
     stomp.connect({}, () => {
       setStatus(true);
-      loadHistory(); loadStats(); loadAlerts();
       stomp.subscribe(topic + 'data', (m) => { addPoint(JSON.parse(m.body)); loadStats(); });
       stomp.subscribe(topic + 'alerts', (m) => {
         const a = JSON.parse(m.body);
@@ -116,6 +114,7 @@
         showToast(a.message);
         renderAlertRow(a);
       });
+      loadHistory(); loadStats(); loadAlerts();
     }, () => {
       setStatus(false);
       setTimeout(connect, 3000); // tự kết nối lại

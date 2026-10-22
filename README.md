@@ -59,6 +59,20 @@ To run this project, team members need to install the following software:
 
 ## 5. Installation & Environment Setup Guide
 
+### Bản hoàn thiện ngày 22/10/2026
+
+Xem [kết quả nghiệm thu và giới hạn](docs/NGHIEM_THU.md) và [báo cáo IoT](docs/BaoCao_HeThong_IoT.docx).
+
+1. Dùng JDK 17, Maven và MySQL. Tạo database `iot_management` với charset `utf8mb4`.
+2. Sao chép `config/application-local.example.properties` thành `config/application-local.properties`, điền mật khẩu MySQL, JWT secret ngẫu nhiên tối thiểu 32 byte, thông tin Gmail/Cloudinary và mật khẩu Admin riêng. File local được bỏ qua trong Git.
+3. Với database của bản cũ, chạy `docs/migrations/001_otp_hash.sql` trên database đó trước khi chạy bản mới. Cột OTP cần đủ chỗ cho BCrypt; Hibernate update có thể không tự tăng độ dài cột cũ.
+4. Chạy `mvn package`, sau đó `./start-local.ps1`. Dừng ứng dụng đang chạy trước khi đóng gói lại trên Windows.
+5. Mở `http://localhost:8080`. Admin được tạo từ cấu hình bootstrap chỉ khi chưa có Admin trong database. Đăng ký tài khoản thông thường qua email OTP.
+
+Kiểm thử: `mvn test` và `node --test src/test/js/*.test.cjs`. Các script `tools/smoke-local.py`, `tools/check-services.py`, `tools/test-cloudinary.py` dùng cấu hình local để kiểm tra dịch vụ thật. Script Cloudinary cần Pillow; smoke MySQL cần chương trình `mysql` trong PATH. `tools/test-registration.py` gửi email thật và lưu mật khẩu tài khoản thử trong `.local/registration-test.json`, không đưa file này lên Git.
+
+Manager xem thiết bị của khu vực nhưng chỉ sửa thiết bị của mình; Admin quản lý toàn bộ. Thiết bị có dữ liệu/cảnh báo được giữ lại để bảo toàn lịch sử, thay vì xóa cứng. Nhà cung cấp hiện là danh bạ do Admin quản lý.
+
 ### Module của Đạt: Device Management & UI
 
 Đã bổ sung CRUD thiết bị/danh mục, tìm kiếm, phân trang, upload Cloudinary và giao diện Thymeleaf + Bootstrap.

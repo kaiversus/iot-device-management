@@ -39,6 +39,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         this.tokenProvider = tokenProvider;
     }
 
+    @org.springframework.beans.factory.annotation.Autowired @org.springframework.context.annotation.Lazy private com.iot.management.service.UserManagementService accounts;
+
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
         return new JwtAuthenticationFilter(tokenProvider, customUserDetailsService);
@@ -96,16 +98,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                     .antMatchers("/", "/login", "/register", "/forgot-password", "/css/**", "/js/**").permitAll()
                     .antMatchers("/api/admin/**").hasRole("ADMIN")
                     .antMatchers("/api/manager/**").hasAnyRole("ADMIN", "MANAGER")
+                    .antMatchers("/management/**", "/api/management/**").hasAnyRole("ADMIN", "MANAGER")
+                    .antMatchers("/admin/**").hasRole("ADMIN")
                     .antMatchers("/categories/**").hasAnyRole("ADMIN", "MANAGER")
                     .antMatchers("/devices/**", "/api/devices/**", "/api/categories/**").hasAnyRole("USER", "MANAGER", "ADMIN")
                     .anyRequest().authenticated()
                     .and()
                 .logout()
                     .logoutUrl("/logout")
+                    .addLogoutHandler((request,response,authentication) -> {if(authentication!=null) accounts.revoke(authentication.getName());})
                     .deleteCookies("jwt_token")
                     .logoutSuccessUrl("/login");
 
         // Add our custom JWT security filter
-        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(jwtAuthenticationFilter(), org.springframework.security.web.authentication.logout.LogoutFilter.class);
     }
 }

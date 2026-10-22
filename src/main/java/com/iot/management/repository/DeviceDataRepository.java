@@ -9,6 +9,7 @@ import java.util.List;
 
 @Repository
 public interface DeviceDataRepository extends JpaRepository<DeviceData, Long> {
+    boolean existsByDeviceId(Long deviceId);
 
     List<DeviceData> findTop20ByDeviceIdOrderByRecordedAtDesc(Long deviceId);
 

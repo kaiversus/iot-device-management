@@ -27,6 +27,24 @@
   ],
   "item": [
     {
+      "name": "0. Lấy CSRF trước khi đăng nhập",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/login"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.collectionVariables.set(\"csrfToken\", pm.cookies.get(\"XSRF-TOKEN\") || \"\");"
+            ]
+          }
+        }
+      ]
+    },
+    {
       "name": "1. Đăng nhập (cookie JWT)",
       "request": {
         "method": "POST",

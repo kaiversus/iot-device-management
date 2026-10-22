@@ -33,12 +33,22 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("version", userDetails.getUser().getTokenVersion())
                 .setIssuedAt(now)
                 .setExpiration(expiryDate)
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
 
+    public boolean matchesVersion(String token, long version) {
+        Object value = Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody().get("version");
+        return value instanceof Number && ((Number)value).longValue() == version;
+    }
+    @javax.annotation.PostConstruct
+    void checkKey() {
+        if (jwtSecret == null || jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8).length < 32)
+            throw new IllegalStateException("Configure JWT_SECRET with at least 32 bytes");
+    }
     public String getUsernameFromJWT(String token) {
         Claims claims = Jwts.parserBuilder()
                 .setSigningKey(getSigningKey())

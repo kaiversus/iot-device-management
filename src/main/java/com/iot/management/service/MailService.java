@@ -14,8 +14,8 @@ public class MailService {
     private JavaMailSender mailSender;
 
     public String generateOTP() {
-        Random rnd = new Random();
-        int number = rnd.nextInt(999999);
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        int number = rnd.nextInt(1000000);
         return String.format("%06d", number);
     }
 
@@ -24,7 +24,7 @@ public class MailService {
         message.setTo(toEmail);
         message.setSubject("Your OTP Code - IoT Device Management System");
         message.setText("Your OTP code is: " + otp + "\n\nPlease use this code to complete your action.");
-        
+
         mailSender.send(message);
     }
 }

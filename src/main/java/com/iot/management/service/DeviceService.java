@@ -19,6 +19,9 @@ import org.springframework.web.multipart.MultipartFile;
 @Transactional(readOnly = true)
 @PreAuthorize("hasAnyRole('USER', 'MANAGER', 'ADMIN')")
 public class DeviceService {
+    @org.springframework.beans.factory.annotation.Autowired private com.iot.management.repository.DeviceDataRepository readings;
+    @org.springframework.beans.factory.annotation.Autowired private com.iot.management.repository.DeviceLogRepository logs;
+    @org.springframework.beans.factory.annotation.Autowired private AuditService audit;
     private final DeviceRepository devices;
     private final CategoryService categories;
     private final CloudinaryService images;
@@ -40,7 +43,13 @@ public class DeviceService {
         if (page < 0 || size < 1 || size > 100 || (q != null && q.length() > 120))
             throw new DeviceException(HttpStatus.BAD_REQUEST, "Trang phải ≥ 0, kích thước 1–100, từ khóa tối đa 120 ký tự");
         Specification<Device> spec = (root, query, cb) -> cb.conjunction();
-        if (!isAdmin(actor)) spec = spec.and((root, query, cb) -> cb.equal(root.get("owner").get("id"), actor.getUser().getId()));
+        if (!isAdmin(actor)) {
+            String region = actor.getUser().getRegion();
+            boolean manager=actor.getAuthorities().stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"));
+            spec = spec.and((root,query,cb) -> manager && region!=null && !region.isBlank()
+                ? cb.or(cb.equal(root.get("owner").get("id"),actor.getUser().getId()),cb.equal(root.get("owner").get("region"),region))
+                : cb.equal(root.get("owner").get("id"),actor.getUser().getId()));
+        }
         if (categoryId != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("category").get("id"), categoryId));
         if (status != null) spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
         if (q != null && !q.isBlank()) {
@@ -51,7 +60,13 @@ public class DeviceService {
         return devices.findAll(spec, PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt", "id")))
             .map(DeviceResponse::from);
     }
-    public DeviceResponse get(Long id, CustomUserDetails actor) { return DeviceResponse.from(accessible(id, actor)); }
+    public DeviceResponse get(Long id, CustomUserDetails actor) {
+        Device d=devices.findById(id).orElseThrow(this::notFound);
+        boolean manager=actor.getAuthorities().stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"));
+        if (!isAdmin(actor) && !d.getOwner().getId().equals(actor.getUser().getId())
+            && !(manager && actor.getUser().getRegion()!=null && actor.getUser().getRegion().equals(d.getOwner().getRegion()))) throw notFound();
+        return DeviceResponse.from(d);
+    }
 
     @Transactional
     public DeviceResponse create(DeviceRequest request, MultipartFile image, CustomUserDetails actor) {
@@ -74,7 +89,11 @@ public class DeviceService {
     }
     @Transactional
     public void delete(Long id, CustomUserDetails actor) {
+        devices.lockForTelemetry(id).orElseThrow(this::notFound);
         Device device = accessible(id, actor);
+        if (readings.existsByDeviceId(id) || logs.existsByDeviceId(id))
+            throw new DeviceException(HttpStatus.CONFLICT,"Thiết bị có lịch sử/cảnh báo. Hãy chuyển sang Ngừng hoạt động để giữ dữ liệu.");
+        audit.record("DEVICE_DELETE","device="+id);
         cleanupAfterTransaction(null, device.getImagePublicId());
         devices.delete(device); devices.flush();
     }

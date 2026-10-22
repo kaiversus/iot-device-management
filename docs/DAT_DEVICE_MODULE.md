@@ -1,3 +1,5 @@
+> Cập nhật 22/10/2026: đây là hướng dẫn module ở giai đoạn trước. Kết quả và chính sách hiện tại xem [NGHIEM_THU.md](NGHIEM_THU.md) và README. CSRF nay áp dụng cả auth; Manager đọc theo khu vực; thiết bị có lịch sử không được xóa cứng; Gmail và Cloudinary đã kiểm thử thật.
+
 # Báo cáo module của Ngô Quang Đạt
 
 ## 1. Phạm vi hoàn thành

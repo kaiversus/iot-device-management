@@ -35,8 +35,17 @@ build/
 ### Mac OS ###
 .DS_Store
 
-# Local database credentials and application logs
+# Local credentials and environment overrides
+/.env
+/.env.*
+!/.env.example
 /config/application-local.properties
+config/application-*.local.properties
+
+# Local runtime output and test credentials
+*.log
+logs/
 /.local/
+uploads/
 
 /build-test.log

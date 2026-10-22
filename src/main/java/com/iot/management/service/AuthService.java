@@ -1,125 +1,77 @@
 package com.iot.management.service;
-
-import com.iot.management.dto.LoginRequest;
-import com.iot.management.dto.RegisterRequest;
-import com.iot.management.dto.ResetPasswordRequest;
-import com.iot.management.entity.Role;
-import com.iot.management.entity.User;
-import com.iot.management.repository.RoleRepository;
-import com.iot.management.repository.UserRepository;
+import com.iot.management.dto.*;
+import com.iot.management.entity.*;
+import com.iot.management.repository.*;
 import com.iot.management.security.JwtTokenProvider;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
-import java.util.Collections;
+import org.springframework.transaction.annotation.Transactional;
+import java.time.Instant;
+import java.util.*;
 
 @Service
+@Transactional(noRollbackFor = IllegalArgumentException.class)
 public class AuthService {
-
-    private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final RoleRepository roleRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtTokenProvider tokenProvider;
-    private final MailService mailService;
-
-    public AuthService(AuthenticationManager authenticationManager,
-                       UserRepository userRepository,
-                       RoleRepository roleRepository,
-                       PasswordEncoder passwordEncoder,
-                       JwtTokenProvider tokenProvider,
-                       MailService mailService) {
-        this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.roleRepository = roleRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.tokenProvider = tokenProvider;
-        this.mailService = mailService;
-    }
-
-    public String authenticateUser(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()
-                )
-        );
-
-        SecurityContextHolder.getContext().setAuthentication(authentication);
-        return tokenProvider.generateToken(authentication);
-    }
-
-    public void registerUser(RegisterRequest registerRequest) {
-        if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email is already taken!");
-        }
-
-        User user = new User();
-        user.setEmail(registerRequest.getEmail());
-        user.setFullName(registerRequest.getFullName());
-        user.setPassword(passwordEncoder.encode(registerRequest.getPassword()));
-
-        Role userRole = roleRepository.findByName("ROLE_USER")
-                .orElseThrow(() -> new RuntimeException("User Role not set."));
-
-        user.setRoles(Collections.singleton(userRole));
-
-        String otp = mailService.generateOTP();
-        user.setOtpCode(otp);
-        user.setEnabled(false); 
-        
-        userRepository.save(user);
-        
-        try {
-            mailService.sendOtpEmail(user.getEmail(), otp);
-        } catch (Exception e) {
-            System.err.println("Failed to send email. Check your SMTP configuration.");
-        }
-    }
-
-    public void processForgotPassword(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with this email"));
-        
-        String otp = mailService.generateOTP();
-        user.setOtpCode(otp);
-        userRepository.save(user);
-        
-        try {
-            mailService.sendOtpEmail(user.getEmail(), otp);
-        } catch (Exception e) {
-            System.err.println("Failed to send email. Check your SMTP configuration.");
-        }
-    }
-
-    public void resetPassword(ResetPasswordRequest request) {
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        if (user.getOtpCode() != null && user.getOtpCode().equals(request.getOtpCode())) {
-            user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-            user.setOtpCode(null);
-            user.setEnabled(true);
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("Invalid OTP Code");
-        }
-    }
-
-    public void verifyAccount(String email, String otpCode) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found"));
-        
-        if (user.getOtpCode() != null && user.getOtpCode().equals(otpCode)) {
-            user.setOtpCode(null);
-            user.setEnabled(true);
-            userRepository.save(user);
-        } else {
-            throw new RuntimeException("Invalid OTP Code");
-        }
-    }
+ private final AuthenticationManager authenticationManager;
+ private final UserRepository users;
+ private final RoleRepository roles;
+ private final PasswordEncoder encoder;
+ private final JwtTokenProvider tokens;
+ private final MailService mail;
+ public AuthService(AuthenticationManager a, UserRepository u, RoleRepository r, PasswordEncoder e, JwtTokenProvider t, MailService m) {
+  authenticationManager=a;users=u;roles=r;encoder=e;tokens=t;mail=m;
+ }
+ public String authenticateUser(LoginRequest r) {
+  Authentication a=authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(normalize(r.getEmail()),r.getPassword()));
+  return tokens.generateToken(a);
+ }
+ public void registerUser(RegisterRequest r) {
+  String email=normalize(r.getEmail());
+  if(users.existsByEmail(email)) throw new IllegalArgumentException("Email đã đăng ký. Nếu chưa xác thực, hãy gửi lại OTP.");
+  User u=new User();u.setEmail(email);u.setFullName(r.getFullName().trim());u.setPassword(encoder.encode(r.getPassword()));
+  u.setRoles(Set.of(roles.findByName("ROLE_USER").orElseThrow()));u.setEnabled(false);
+  issue(u,"VERIFY");
+ }
+ public void resendVerification(String email) {
+  User u=locked(email);
+  if(u.isEnabled() || u.isLocked()) throw new IllegalArgumentException("Tài khoản không thể xác thực lại.");
+  issue(u,"VERIFY");
+ }
+ public void processForgotPassword(String email) {
+  User u=locked(email);
+  if(!u.isEnabled() || u.isLocked()) throw new IllegalArgumentException("Tài khoản chưa xác thực hoặc đã bị khóa.");
+  issue(u,"RESET");
+ }
+ private void issue(User u,String purpose) {
+  Instant now=Instant.now();
+  if(u.getOtpSentAt()!=null && u.getOtpSentAt().plusSeconds(60).isAfter(now)) throw new IllegalArgumentException("Vui lòng chờ 60 giây trước khi gửi lại OTP.");
+  String code=mail.generateOTP();
+  u.setOtpCode(encoder.encode(code));u.setOtpPurpose(purpose);u.setOtpExpiresAt(now.plusSeconds(300));u.setOtpSentAt(now);u.setOtpAttempts(0);
+  users.saveAndFlush(u);
+  try { mail.sendOtpEmail(u.getEmail(),code); }
+  catch(RuntimeException ex) { throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,"Không gửi được email. Vui lòng thử lại sau."); }
+ }
+ public void resetPassword(ResetPasswordRequest r) {
+  User u=locked(r.getEmail());check(u,r.getOtpCode(),"RESET");
+  if(!u.isEnabled() || u.isLocked()) throw new IllegalArgumentException("Tài khoản không khả dụng.");
+  u.setPassword(encoder.encode(r.getNewPassword()));u.setTokenVersion(u.getTokenVersion()+1);clear(u);
+ }
+ public void verifyAccount(String email,String code) {
+  User u=locked(email);check(u,code,"VERIFY");
+  if(u.isLocked()) throw new IllegalArgumentException("Tài khoản đã bị khóa.");
+  u.setEnabled(true);clear(u);
+ }
+ private void check(User u,String code,String purpose) {
+  if(u.getOtpCode()==null || !purpose.equals(u.getOtpPurpose()) || u.getOtpExpiresAt()==null || !u.getOtpExpiresAt().isAfter(Instant.now()) || u.getOtpAttempts()>=5)
+   throw new IllegalArgumentException("OTP hết hạn, sai mục đích hoặc đã vượt số lần thử. Hãy gửi lại mã.");
+  if(code==null || !code.matches("[0-9]{6}") || !encoder.matches(code,u.getOtpCode())) {
+   u.setOtpAttempts(u.getOtpAttempts()+1);users.saveAndFlush(u);
+   throw new IllegalArgumentException("OTP không đúng.");
+  }
+ }
+ private void clear(User u) {u.setOtpCode(null);u.setOtpPurpose(null);u.setOtpExpiresAt(null);u.setOtpAttempts(0);}
+ private User locked(String email) {return users.lockByEmail(normalize(email)).orElseThrow(() -> new IllegalArgumentException("Không tìm thấy tài khoản."));}
+ private String normalize(String email) {return email==null ? "" : email.trim().toLowerCase(Locale.ROOT);}
 }

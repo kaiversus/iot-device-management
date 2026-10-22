@@ -8,6 +8,7 @@ import java.util.List;
 
 @Repository
 public interface DeviceLogRepository extends JpaRepository<DeviceLog, Long> {
+    boolean existsByDeviceId(Long deviceId);
 
     List<DeviceLog> findTop10ByOrderByCreatedAtDesc();
 

@@ -25,6 +25,9 @@ cookies = CookieJar()
 opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cookies))
 login = urllib.request.Request(origin+"/api/auth/login", json.dumps({"email":a.email,"password":os.environ["IOT_PASSWORD"]}).encode(), {"Content-Type":"application/json"})
 try:
+    opener.open(origin+"/login",timeout=10).close()
+    csrf = next((c.value for c in cookies if c.name=="XSRF-TOKEN"), "")
+    login.add_header("X-XSRF-TOKEN",csrf)
     opener.open(login, timeout=10).close()
     opener.open(origin+"/dashboard", timeout=10).close()
 except urllib.error.URLError as e:

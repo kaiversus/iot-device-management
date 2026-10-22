@@ -12,6 +12,7 @@ import java.util.Arrays;
 public class DataInitializer {
 
     @Bean
+    @org.springframework.core.annotation.Order(0)
     public CommandLineRunner initRoles(RoleRepository roleRepository) {
         return args -> {
             Arrays.asList("ROLE_GUEST", "ROLE_USER", "ROLE_MANAGER", "ROLE_ADMIN").forEach(roleName -> {

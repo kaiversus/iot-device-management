@@ -23,6 +23,8 @@ import java.util.Map;
 @Service
 public class DeviceDataService {
 
+    @org.springframework.beans.factory.annotation.Autowired private com.iot.management.repository.UserRepository users;
+    @org.springframework.beans.factory.annotation.Autowired private SystemSettingsService settings;
     private final com.iot.management.repository.DeviceRepository devices;
     private final DeviceDataRepository dataRepository;
     private com.iot.management.security.CustomUserDetails actor() {
@@ -31,7 +33,11 @@ public class DeviceDataService {
     private boolean admin() { return actor().getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")); }
     private List<com.iot.management.entity.Device> visible() {
         if (admin()) return devices.findAll();
-        return devices.findAll((root, query, cb) -> cb.equal(root.get("owner").get("id"), actor().getUser().getId()));
+        String region=actor().getUser().getRegion();
+        boolean manager=actor().getAuthorities().stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"));
+        return devices.findAll((root, query, cb) -> manager && region!=null && !region.isBlank()
+          ? cb.or(cb.equal(root.get("owner").get("id"),actor().getUser().getId()),cb.equal(root.get("owner").get("region"),region))
+          : cb.equal(root.get("owner").get("id"), actor().getUser().getId()));
     }
     private List<Long> ids() { return visible().stream().map(com.iot.management.entity.Device::getId).collect(java.util.stream.Collectors.toList()); }
     private com.iot.management.entity.Device accessible(Long id) {
@@ -40,9 +46,15 @@ public class DeviceDataService {
         return d;
     }
     private void publish(String owner, String channel, Object payload) {
+        java.util.Set<String> recipients=new java.util.HashSet<>();recipients.add(owner);
+        users.findByEmail(owner).ifPresent(u -> {
+            if(u.getRegion()!=null) users.findByRegionAndEnabledTrueAndLockedFalse(u.getRegion()).stream()
+                .filter(m->m.getRoles().stream().anyMatch(r->r.getName().equals("ROLE_MANAGER")))
+                .forEach(m->recipients.add(m.getEmail()));
+        });
         org.springframework.transaction.support.TransactionSynchronizationManager.registerSynchronization(new org.springframework.transaction.support.TransactionSynchronization() {
             @Override public void afterCommit() {
-                messagingTemplate.convertAndSendToUser(owner,"/queue/"+channel,payload);
+                recipients.forEach(recipient -> messagingTemplate.convertAndSendToUser(recipient,"/queue/"+channel,payload));
                 messagingTemplate.convertAndSend("/topic/"+channel,payload);
             }
         });
@@ -79,10 +91,10 @@ public class DeviceDataService {
         DeviceData saved = dataRepository.saveAndFlush(data);
 
         publish(owner, "data", new DataPointMessage(
-                saved.getDeviceId(), saved.getTemperature(), saved.getHumidity(),
+                saved.getId(), saved.getDeviceId(), saved.getTemperature(), saved.getHumidity(),
                 saved.getRecordedAt().toString()));
 
-        if (saved.getTemperature() > temperatureThreshold) {
+        if (saved.getTemperature() > settings.threshold()) {
             raiseAlert(saved, owner);
         }
         return saved;
@@ -103,13 +115,17 @@ public class DeviceDataService {
     /** Lịch sử gần nhất (cũ -> mới) để vẽ biểu đồ khi mở trang. */
     @Transactional(readOnly = true)
     public List<DeviceData> history(Long deviceId) {
-        List<Long> scope = deviceId == null ? ids() : List.of(accessible(deviceId).getId());
+        List<Long> scope = deviceId == null ? ids() : List.of(readable(deviceId));
         if (scope.isEmpty()) return List.of();
         List<DeviceData> list = dataRepository.findTop20ByDeviceIdInOrderByRecordedAtDescIdDesc(scope);
         Collections.reverse(list);
         return list;
     }
 
+    private Long readable(Long id) {
+        if(!ids().contains(id)) throw new com.iot.management.exception.DeviceException(org.springframework.http.HttpStatus.NOT_FOUND,"Không tìm thấy thiết bị");
+        return id;
+    }
     @Transactional(readOnly = true)
     public Map<String, Object> stats() {
         Map<String, Object> m = new HashMap<>();
@@ -122,7 +138,7 @@ public class DeviceDataService {
         m.put("totalRecords", ids.isEmpty() ? 0 : dataRepository.countByDeviceIdIn(ids));
         m.put("reportingDevices", ids.isEmpty() ? 0 : dataRepository.countReporting(ids));
         m.put("totalAlerts", ids.isEmpty() ? 0 : logRepository.countByDeviceIdInAndLevel(ids,"WARNING"));
-        m.put("threshold", temperatureThreshold);
+        m.put("threshold", settings.threshold());
         return m;
     }
 
