@@ -33,7 +33,7 @@ public class DeviceService {
     }
     private Device accessible(Long id, CustomUserDetails actor) {
         Device device = devices.findById(id).orElseThrow(this::notFound);
-        if (!isAdmin(actor) && !device.getOwner().getId().equals(actor.getUser().getId())) throw notFound();
+        if (device.isDeleted() || (!isAdmin(actor) && !device.getOwner().getId().equals(actor.getUser().getId()))) throw notFound();
         return device;
     }
     private DeviceException notFound() { return new DeviceException(HttpStatus.NOT_FOUND, "Không tìm thấy thiết bị"); }
@@ -42,7 +42,7 @@ public class DeviceService {
             DeviceStatus status, int page, int size) {
         if (page < 0 || size < 1 || size > 100 || (q != null && q.length() > 120))
             throw new DeviceException(HttpStatus.BAD_REQUEST, "Trang phải ≥ 0, kích thước 1–100, từ khóa tối đa 120 ký tự");
-        Specification<Device> spec = (root, query, cb) -> cb.conjunction();
+        Specification<Device> spec = (root, query, cb) -> cb.isFalse(root.get("deleted"));
         if (!isAdmin(actor)) {
             String region = actor.getUser().getRegion();
             boolean manager=actor.getAuthorities().stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"));
@@ -63,8 +63,8 @@ public class DeviceService {
     public DeviceResponse get(Long id, CustomUserDetails actor) {
         Device d=devices.findById(id).orElseThrow(this::notFound);
         boolean manager=actor.getAuthorities().stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"));
-        if (!isAdmin(actor) && !d.getOwner().getId().equals(actor.getUser().getId())
-            && !(manager && actor.getUser().getRegion()!=null && actor.getUser().getRegion().equals(d.getOwner().getRegion()))) throw notFound();
+        if (d.isDeleted() || (!isAdmin(actor) && !d.getOwner().getId().equals(actor.getUser().getId())
+            && !(manager && actor.getUser().getRegion()!=null && actor.getUser().getRegion().equals(d.getOwner().getRegion())))) throw notFound();
         return DeviceResponse.from(d);
     }
 
@@ -91,11 +91,27 @@ public class DeviceService {
     public void delete(Long id, CustomUserDetails actor) {
         devices.lockForTelemetry(id).orElseThrow(this::notFound);
         Device device = accessible(id, actor);
-        if (readings.existsByDeviceId(id) || logs.existsByDeviceId(id))
-            throw new DeviceException(HttpStatus.CONFLICT,"Thiết bị có lịch sử/cảnh báo. Hãy chuyển sang Ngừng hoạt động để giữ dữ liệu.");
+        if (readings.existsByDeviceId(id) || logs.existsByDeviceId(id)) {
+            if (device.getStatus() != DeviceStatus.INACTIVE)
+                throw new DeviceException(HttpStatus.CONFLICT,"Thiết bị có lịch sử/cảnh báo. Hãy bấm Ngừng hoạt động trước khi xóa.");
+            device.setDeleted(true);
+            devices.saveAndFlush(device);
+            audit.record("DEVICE_ARCHIVE", "device=" + id);
+            return;
+        }
         audit.record("DEVICE_DELETE","device="+id);
         cleanupAfterTransaction(null, device.getImagePublicId());
         devices.delete(device); devices.flush();
+    }
+    @Transactional
+    public DeviceResponse deactivate(Long id, CustomUserDetails actor) {
+        devices.lockForTelemetry(id).orElseThrow(this::notFound);
+        Device device = accessible(id, actor);
+        if (device.getStatus() != DeviceStatus.INACTIVE) {
+            device.setStatus(DeviceStatus.INACTIVE);
+            audit.record("DEVICE_DEACTIVATE", "device=" + id);
+        }
+        return DeviceResponse.from(devices.saveAndFlush(device));
     }
     private void apply(Device device, DeviceRequest request) {
         boolean duplicate = device.getId() == null ? devices.existsBySerialNumberIgnoreCase(request.getSerialNumber())

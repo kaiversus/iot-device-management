@@ -73,7 +73,13 @@ public class DeviceWebController {
     }
     @PostMapping("/{id}/delete")
     public String delete(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails actor, RedirectAttributes flash) {
-        devices.delete(id, actor); flash.addFlashAttribute("success", "Đã xóa thiết bị."); return "redirect:/devices";
+        devices.delete(id, actor); flash.addFlashAttribute("success", "Đã xóa thiết bị khỏi danh sách. Lịch sử cũ (nếu có) vẫn được lưu."); return "redirect:/devices";
+    }
+    @PostMapping("/{id}/deactivate")
+    public String deactivate(@PathVariable Long id, @AuthenticationPrincipal CustomUserDetails actor, RedirectAttributes flash) {
+        devices.deactivate(id, actor);
+        flash.addFlashAttribute("success", "Đã ngừng hoạt động thiết bị; lịch sử vẫn được giữ lại.");
+        return "redirect:/devices/" + id;
     }
     private String form(Model model, Long id, String imageUrl) {
         model.addAttribute("deviceId", id); model.addAttribute("imageUrl", imageUrl);

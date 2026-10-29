@@ -99,8 +99,30 @@ class CompletionIntegrationTest {
  }
  @Test void deviceHistoryPreventsDeletionAndDatabaseEnforcesForeignKey() throws Exception {
   Device d=device(owner,"HISTORY");DeviceData reading=new DeviceData();reading.setDeviceId(d.getId());reading.setTemperature(60d);reading.setHumidity(50d);data.save(reading);
+  d.setStatus(DeviceStatus.ACTIVE);devices.saveAndFlush(d);
   mvc.perform(delete("/api/devices/{id}",d.getId()).with(as(owner)).with(csrf())).andExpect(status().isConflict());
   assertThat(devices.existsById(d.getId())).isTrue();
+  mvc.perform(post("/devices/{id}/deactivate",d.getId()).with(as(other)).with(csrf())).andExpect(status().isNotFound());
+  mvc.perform(post("/devices/{id}/deactivate",d.getId()).with(as(owner)).with(csrf()))
+      .andExpect(status().is3xxRedirection()).andExpect(redirectedUrl("/devices/"+d.getId()));
+  assertThat(devices.findById(d.getId()).orElseThrow().getStatus()).isEqualTo(DeviceStatus.INACTIVE);
+  assertThat(data.existsByDeviceId(d.getId())).isTrue();
+  mvc.perform(delete("/api/devices/{id}",d.getId()).with(as(owner)).with(csrf())).andExpect(status().isNoContent());
+  assertThat(devices.findById(d.getId()).orElseThrow().isDeleted()).isTrue();
+  assertThat(data.existsByDeviceId(d.getId())).isTrue();
+  mvc.perform(get("/api/devices/{id}",d.getId()).with(as(owner))).andExpect(status().isNotFound());
+  mvc.perform(get("/api/devices").with(as(owner))).andExpect(jsonPath("totalElements").value(0));
+  mvc.perform(post("/api/iot/data").with(as(owner)).with(csrf()).contentType("application/json")
+      .content("{\"deviceId\":"+d.getId()+",\"temperature\":25,\"humidity\":50}"))
+      .andExpect(status().isNotFound());
+  mvc.perform(delete("/api/categories/{id}",d.getCategory().getId()).with(as(admin)).with(csrf()))
+      .andExpect(status().isNoContent());
+  assertThat(categories.findById(d.getCategory().getId()).orElseThrow().isDeleted()).isTrue();
+  mvc.perform(get("/api/categories").with(as(admin))).andExpect(jsonPath("$",org.hamcrest.Matchers.hasSize(0)));
+  mvc.perform(post("/api/categories").with(as(admin)).with(csrf()).contentType("application/json")
+      .content("{\"name\":\"HISTORY\",\"description\":\"Dùng lại tên danh mục\"}"))
+      .andExpect(status().isCreated());
+  assertThat(categories.findById(d.getCategory().getId()).orElseThrow().isDeleted()).isFalse();
   DeviceData invalid=new DeviceData();invalid.setDeviceId(999999L);
   assertThatThrownBy(()->data.saveAndFlush(invalid)).isInstanceOf(org.springframework.dao.DataIntegrityViolationException.class);
  }

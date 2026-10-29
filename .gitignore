@@ -1,51 +1,12 @@
-HELP.md
-target/
-!.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
-.vscode/
-
-### Mac OS ###
-.DS_Store
-
-# Local credentials and environment overrides
-/.env
-/.env.*
-!/.env.example
-/config/application-local.properties
-config/application-*.local.properties
-
-# Local runtime output and test credentials
-*.log
-logs/
-/.local/
-uploads/
-
-/build-test.log
+*
+!/.gitignore
+!/pom.xml
+!/src/
+!/src/main/
+!/src/main/**
+!/src/test/
+!/src/test/**
+**/target/
+**/build/
+**/*.class
+**/*.log

@@ -32,17 +32,18 @@ public class DeviceDataService {
     }
     private boolean admin() { return actor().getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN")); }
     private List<com.iot.management.entity.Device> visible() {
-        if (admin()) return devices.findAll();
+        if (admin()) return devices.findAll((root, query, cb) -> cb.isFalse(root.get("deleted")));
         String region=actor().getUser().getRegion();
         boolean manager=actor().getAuthorities().stream().anyMatch(a->a.getAuthority().equals("ROLE_MANAGER"));
-        return devices.findAll((root, query, cb) -> manager && region!=null && !region.isBlank()
+        return devices.findAll((root, query, cb) -> cb.and(cb.isFalse(root.get("deleted")),
+          manager && region!=null && !region.isBlank()
           ? cb.or(cb.equal(root.get("owner").get("id"),actor().getUser().getId()),cb.equal(root.get("owner").get("region"),region))
-          : cb.equal(root.get("owner").get("id"), actor().getUser().getId()));
+          : cb.equal(root.get("owner").get("id"), actor().getUser().getId())));
     }
     private List<Long> ids() { return visible().stream().map(com.iot.management.entity.Device::getId).collect(java.util.stream.Collectors.toList()); }
     private com.iot.management.entity.Device accessible(Long id) {
         com.iot.management.entity.Device d=devices.findById(id).orElseThrow(() -> new com.iot.management.exception.DeviceException(org.springframework.http.HttpStatus.NOT_FOUND,"Không tìm thấy thiết bị"));
-        if (!admin() && !d.getOwner().getId().equals(actor().getUser().getId())) throw new com.iot.management.exception.DeviceException(org.springframework.http.HttpStatus.NOT_FOUND,"Không tìm thấy thiết bị");
+        if (d.isDeleted() || (!admin() && !d.getOwner().getId().equals(actor().getUser().getId()))) throw new com.iot.management.exception.DeviceException(org.springframework.http.HttpStatus.NOT_FOUND,"Không tìm thấy thiết bị");
         return d;
     }
     private void publish(String owner, String channel, Object payload) {

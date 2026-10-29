@@ -49,7 +49,7 @@
                             <input type="text" class="form-control" id="otpCode" required maxlength="6">
                         </div>
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary">Verify & Login</button>
+                            <button type="submit" class="btn btn-primary">Xác thực tài khoản</button>
                         </div>
                     </form>
                 </div>
@@ -123,7 +123,8 @@ document.getElementById("verifyForm").addEventListener("submit", async function(
         if (res.ok) {
             alertBox.classList.remove("alert-danger");
             alertBox.classList.add("alert-success");
-            alertBox.innerHTML = data.message + ' <a href="/login">Click here to Login</a>';
+            alertBox.textContent = "Xác thực thành công. Đang chuyển đến trang đăng nhập…";
+            window.location.assign("/login");
         } else {
             alertBox.classList.remove("alert-success");
             alertBox.classList.add("alert-danger");

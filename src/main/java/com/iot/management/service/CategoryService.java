@@ -19,23 +19,34 @@ public class CategoryService {
     public CategoryService(CategoryRepository categories, DeviceRepository devices) {
         this.categories = categories; this.devices = devices;
     }
-    public List<Category> list() { return categories.findAllByOrderByNameAsc(); }
+    public List<Category> list() { return categories.findAllByDeletedFalseOrderByNameAsc(); }
     public Category get(Long id) {
-        return categories.findById(id).orElseThrow(() -> new DeviceException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
+        Category category = categories.findById(id).orElseThrow(() -> new DeviceException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục"));
+        if (category.isDeleted()) throw new DeviceException(HttpStatus.NOT_FOUND, "Không tìm thấy danh mục");
+        return category;
     }
     @Transactional @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public Category save(Long id, CategoryRequest request) {
-        Category category = id == null ? new Category() : get(id);
+        Category category = id == null ? categories.findByNameIgnoreCase(request.getName())
+            .filter(Category::isDeleted).orElseGet(Category::new) : get(id);
         boolean duplicate = id == null ? categories.existsByNameIgnoreCase(request.getName())
             : categories.existsByNameIgnoreCaseAndIdNot(request.getName(), id);
-        if (duplicate) throw new DeviceException(HttpStatus.CONFLICT, "Tên danh mục đã tồn tại");
+        if (duplicate && !category.isDeleted()) throw new DeviceException(HttpStatus.CONFLICT, "Tên danh mục đã tồn tại");
+        category.setDeleted(false);
         category.setName(request.getName()); category.setDescription(request.getDescription());
         return categories.saveAndFlush(category);
     }
     @Transactional @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
     public void delete(Long id) {
         Category category = get(id);
-        if (devices.existsByCategoryId(id)) throw new DeviceException(HttpStatus.CONFLICT, "Danh mục đang được thiết bị sử dụng, không thể xóa");
-        categories.delete(category); categories.flush();
+        if (devices.existsByCategoryIdAndDeletedFalse(id))
+            throw new DeviceException(HttpStatus.CONFLICT, "Danh mục còn thiết bị trong danh sách. Hãy xóa các thiết bị đó trước.");
+        if (devices.existsByCategoryId(id)) {
+            category.setDeleted(true);
+            categories.saveAndFlush(category);
+        } else {
+            categories.delete(category);
+            categories.flush();
+        }
     }
 }

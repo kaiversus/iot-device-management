@@ -11,4 +11,5 @@ public interface DeviceRepository extends JpaRepository<Device, Long>, JpaSpecif
     boolean existsBySerialNumberIgnoreCase(String serialNumber);
     boolean existsBySerialNumberIgnoreCaseAndIdNot(String serialNumber, Long id);
     boolean existsByCategoryId(Long categoryId);
+    boolean existsByCategoryIdAndDeletedFalse(Long categoryId);
 }

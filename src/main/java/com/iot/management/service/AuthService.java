@@ -14,6 +14,7 @@ import java.util.*;
 @Service
 @Transactional(noRollbackFor = IllegalArgumentException.class)
 public class AuthService {
+ private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(AuthService.class);
  private final AuthenticationManager authenticationManager;
  private final UserRepository users;
  private final RoleRepository roles;
@@ -51,7 +52,10 @@ public class AuthService {
   u.setOtpCode(encoder.encode(code));u.setOtpPurpose(purpose);u.setOtpExpiresAt(now.plusSeconds(300));u.setOtpSentAt(now);u.setOtpAttempts(0);
   users.saveAndFlush(u);
   try { mail.sendOtpEmail(u.getEmail(),code); }
-  catch(RuntimeException ex) { throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,"Không gửi được email. Vui lòng thử lại sau."); }
+  catch(RuntimeException ex) {
+   log.error("OTP email delivery failed", ex);
+   throw new org.springframework.web.server.ResponseStatusException(org.springframework.http.HttpStatus.SERVICE_UNAVAILABLE,"Không gửi được email. Vui lòng thử lại sau.");
+  }
  }
  public void resetPassword(ResetPasswordRequest r) {
   User u=locked(r.getEmail());check(u,r.getOtpCode(),"RESET");

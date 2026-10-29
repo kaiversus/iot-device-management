@@ -23,6 +23,8 @@ public class Device {
     private String location;
     @Enumerated(EnumType.STRING) @Column(nullable = false, length = 20)
     private DeviceStatus status = DeviceStatus.INACTIVE;
+    @Column(nullable = false)
+    private boolean deleted = false;
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
@@ -55,6 +57,8 @@ public class Device {
     public void setLocation(String location) { this.location = location; }
     public DeviceStatus getStatus() { return status; }
     public void setStatus(DeviceStatus status) { this.status = status; }
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean deleted) { this.deleted = deleted; }
     public User getOwner() { return owner; }
     public void setOwner(User owner) { this.owner = owner; }
     public Category getCategory() { return category; }
