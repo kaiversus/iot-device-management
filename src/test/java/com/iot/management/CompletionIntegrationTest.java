@@ -39,6 +39,7 @@ class CompletionIntegrationTest {
  void issue(String purpose,Instant expiry) {owner.setOtpCode(encoder.encode("123456"));owner.setOtpPurpose(purpose);owner.setOtpExpiresAt(expiry);owner=users.save(owner);}
  String resetBody(String code) {return "{\"email\":\"owner@test.invalid\",\"otpCode\":\""+code+"\",\"newPassword\":\"newpass123\"}";}
  String updateBody(String region,String role) {return "{\"fullName\":\"Changed\",\"region\":\""+region+"\",\"role\":\""+role+"\",\"locked\":false}";}
+ String createBody(String email,String region,String role) {return "{\"email\":\""+email+"\",\"fullName\":\"New User\",\"password\":\"initial123\",\"region\":\""+region+"\",\"role\":\""+role+"\"}";}
  @Test void mailFailureIs503AndDoesNotPersistRegistration() throws Exception {
   doThrow(new RuntimeException("offline")).when(mail).sendOtpEmail(anyString(),anyString());
   mvc.perform(post("/api/auth/register").with(csrf()).contentType("application/json").content("{\"email\":\"new@test.invalid\",\"fullName\":\"New\",\"password\":\"pass1234\"}")).andExpect(status().isServiceUnavailable());
@@ -87,6 +88,61 @@ class CompletionIntegrationTest {
   mvc.perform(put("/api/management/users/{id}",owner.getId()).with(as(manager)).with(csrf()).contentType("application/json").content(updateBody("North","ROLE_USER"))).andExpect(status().isOk());
   mvc.perform(put("/api/management/users/{id}",other.getId()).with(as(manager)).with(csrf()).contentType("application/json").content(updateBody("South","ROLE_USER"))).andExpect(status().isForbidden());
   mvc.perform(put("/api/management/users/{id}",owner.getId()).with(as(manager)).with(csrf()).contentType("application/json").content(updateBody("North","ROLE_ADMIN"))).andExpect(status().isForbidden());
+ }
+ @Test void managerCreatesScopedUserWhoCanLogInAndCannotCreateElevatedUsers() throws Exception {
+  String body=createBody("NEW@TEST.INVALID","North","ROLE_USER");
+  mvc.perform(post("/api/management/users").with(as(owner)).with(csrf()).contentType("application/json").content(body)).andExpect(status().isForbidden());
+  mvc.perform(post("/api/management/users").with(as(manager)).contentType("application/json").content(body)).andExpect(status().isForbidden());
+  mvc.perform(post("/api/management/users").with(as(manager)).with(csrf()).contentType("application/json").content(body))
+      .andExpect(status().isCreated()).andExpect(jsonPath("email").value("new@test.invalid")).andExpect(jsonPath("password").doesNotExist());
+  User created=users.findByEmail("new@test.invalid").orElseThrow();
+  assertThat(created.isEnabled()).isTrue();assertThat(encoder.matches("initial123",created.getPassword())).isTrue();
+  mvc.perform(post("/api/auth/login").with(csrf()).contentType("application/json")
+      .content("{\"email\":\"new@test.invalid\",\"password\":\"initial123\"}"))
+      .andExpect(status().isOk());
+  mvc.perform(post("/api/management/users").with(as(manager)).with(csrf()).contentType("application/json").content(body)).andExpect(status().isConflict());
+  mvc.perform(post("/api/management/users").with(as(manager)).with(csrf()).contentType("application/json").content(createBody("south@test.invalid","South","ROLE_USER"))).andExpect(status().isForbidden());
+  mvc.perform(post("/api/management/users").with(as(manager)).with(csrf()).contentType("application/json").content(createBody("elevated@test.invalid","North","ROLE_ADMIN"))).andExpect(status().isForbidden());
+ }
+ @Test void adminCanCreateManager() throws Exception {
+  mvc.perform(post("/api/management/users").with(as(admin)).with(csrf()).contentType("application/json")
+      .content(createBody("newmanager@test.invalid","South","ROLE_MANAGER")))
+      .andExpect(status().isCreated()).andExpect(jsonPath("roles",org.hamcrest.Matchers.hasItem("ROLE_MANAGER")));
+  mvc.perform(get("/api/management/users").with(as(admin))).andExpect(jsonPath("totalElements").value(5));
+ }
+ @Test void deletingUserRemovesAccountDevicesAndHistoryAndAllowsRegistrationAgain() throws Exception {
+  Device d=device(owner,"OWNED-DEVICE");String jwt=token(owner);
+  DeviceData reading=new DeviceData();reading.setDeviceId(d.getId());reading.setTemperature(22d);data.saveAndFlush(reading);
+  logs.saveAndFlush(new DeviceLog(d.getId(),"WARNING","Threshold exceeded"));
+  mvc.perform(delete("/api/management/users/{id}",owner.getId()).with(as(admin))).andExpect(status().isForbidden());
+  mvc.perform(delete("/api/management/users/{id}",admin.getId()).with(as(admin)).with(csrf())).andExpect(status().isForbidden());
+  mvc.perform(delete("/api/management/users/{id}",owner.getId()).with(as(manager)).with(csrf())).andExpect(status().isNoContent());
+  assertThat(users.existsById(owner.getId())).isFalse();
+  assertThat(devices.existsById(d.getId())).isFalse();
+  assertThat(data.existsByDeviceId(d.getId())).isFalse();
+  assertThat(logs.existsByDeviceId(d.getId())).isFalse();
+  mvc.perform(get("/api/management/users").with(as(manager))).andExpect(jsonPath("totalElements").value(1));
+  mvc.perform(get("/api/devices").header("Authorization","Bearer "+jwt)).andExpect(status().isUnauthorized());
+  mvc.perform(put("/api/management/users/{id}",owner.getId()).with(as(admin)).with(csrf()).contentType("application/json").content(updateBody("North","ROLE_USER"))).andExpect(status().isNotFound());
+  mvc.perform(delete("/api/management/users/{id}",owner.getId()).with(as(admin)).with(csrf())).andExpect(status().isNotFound());
+  mvc.perform(post("/api/auth/register").with(csrf()).contentType("application/json")
+      .content("{\"email\":\"owner@test.invalid\",\"fullName\":\"New Owner\",\"password\":\"pass1234\"}"))
+      .andExpect(status().isOk());
+  assertThat(users.findByEmail("owner@test.invalid").orElseThrow().getId()).isNotEqualTo(owner.getId());
+ }
+ @Test void oldSoftDeletedEmailCanBeRegisteredAgain() throws Exception {
+  Device d=device(owner,"LEGACY-DEVICE");owner.setDeleted(true);owner.setEnabled(false);owner.setLocked(true);users.saveAndFlush(owner);
+  mvc.perform(post("/api/auth/register").with(csrf()).contentType("application/json")
+      .content("{\"email\":\"owner@test.invalid\",\"fullName\":\"Replacement\",\"password\":\"pass1234\"}"))
+      .andExpect(status().isOk());
+  assertThat(devices.existsById(d.getId())).isFalse();
+  assertThat(users.findByEmail("owner@test.invalid").orElseThrow().isDeleted()).isFalse();
+ }
+ @Test void managerCannotDeleteOutsideRegionOrElevatedAccounts() throws Exception {
+  mvc.perform(delete("/api/management/users/{id}",other.getId()).with(as(manager)).with(csrf())).andExpect(status().isForbidden());
+  mvc.perform(delete("/api/management/users/{id}",manager.getId()).with(as(manager)).with(csrf())).andExpect(status().isForbidden());
+  mvc.perform(delete("/api/management/users/{id}",admin.getId()).with(as(manager)).with(csrf())).andExpect(status().isForbidden());
+  mvc.perform(delete("/api/management/users/{id}",manager.getId()).with(as(admin)).with(csrf())).andExpect(status().isNoContent());
  }
  Device device(User owner,String serial) {Category c=new Category();c.setName(serial);c=categories.save(c);Device d=new Device();d.setName(serial);d.setSerialNumber(serial);d.setOwner(owner);d.setCategory(c);return devices.save(d);}
  @Test void managerReadsAreaButCannotSendOrDeleteOthersDevices() throws Exception {

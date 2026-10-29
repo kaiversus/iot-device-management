@@ -39,6 +39,10 @@ public class User {
     private boolean locked = false;
     public boolean isLocked() { return locked; }
     public void setLocked(boolean v) { locked=v; }
+    @Column(nullable = false)
+    private boolean deleted = false;
+    public boolean isDeleted() { return deleted; }
+    public void setDeleted(boolean v) { deleted=v; }
     private Long tokenVersion = 0L;
     public Long getTokenVersion() { return tokenVersion == null ? 0L : tokenVersion; }
     public void setTokenVersion(Long v) { tokenVersion=v; }

@@ -21,8 +21,9 @@ public class AuthService {
  private final PasswordEncoder encoder;
  private final JwtTokenProvider tokens;
  private final MailService mail;
- public AuthService(AuthenticationManager a, UserRepository u, RoleRepository r, PasswordEncoder e, JwtTokenProvider t, MailService m) {
-  authenticationManager=a;users=u;roles=r;encoder=e;tokens=t;mail=m;
+ private final UserDeletionService deletion;
+ public AuthService(AuthenticationManager a, UserRepository u, RoleRepository r, PasswordEncoder e, JwtTokenProvider t, MailService m, UserDeletionService d) {
+  authenticationManager=a;users=u;roles=r;encoder=e;tokens=t;mail=m;deletion=d;
  }
  public String authenticateUser(LoginRequest r) {
   Authentication a=authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(normalize(r.getEmail()),r.getPassword()));
@@ -30,7 +31,10 @@ public class AuthService {
  }
  public void registerUser(RegisterRequest r) {
   String email=normalize(r.getEmail());
-  if(users.existsByEmail(email)) throw new IllegalArgumentException("Email đã đăng ký. Nếu chưa xác thực, hãy gửi lại OTP.");
+  users.findByEmail(email).ifPresent(existing->{
+   if(existing.isDeleted()) deletion.delete(existing);
+   else throw new IllegalArgumentException("Email đã đăng ký. Nếu chưa xác thực, hãy gửi lại OTP.");
+  });
   User u=new User();u.setEmail(email);u.setFullName(r.getFullName().trim());u.setPassword(encoder.encode(r.getPassword()));
   u.setRoles(Set.of(roles.findByName("ROLE_USER").orElseThrow()));u.setEnabled(false);
   issue(u,"VERIFY");

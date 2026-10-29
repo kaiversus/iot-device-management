@@ -15,15 +15,24 @@ if($('profileForm')) {
  $('passwordForm').onsubmit=run(async()=>{const result=await api('/api/account/password','POST',{currentPassword:$('currentPassword').value,newPassword:$('newPassword').value});notice(result.message);setTimeout(()=>location.href='/login',1500);});
 }
 if($('usersBody')) {
- let page=0,admin=false;
+ let page=0,admin=false,currentUserId=null;
  async function load() {const data=await api('/api/management/users?q='+encodeURIComponent($('query').value)+'&page='+page);$('usersBody').replaceChildren();
   for(const u of data.content) {const tr=document.createElement('tr');[u.email,u.fullName,u.region,u.roles.join(', '),u.locked?'Đã khóa':u.enabled?'Đã xác thực':'Chưa xác thực'].forEach(v=>cell(tr,v));
-   if(admin || u.roles.every(r=>r==='ROLE_USER'))button(cell(tr,''),'Sửa',()=>{ $('editUser').hidden=false;$('userId').value=u.id;$('userName').value=u.fullName;$('userRegion').value=u.region||'';$('userRole').value=u.roles[0];$('userLocked').checked=u.locked;$('userRegion').disabled=!admin;$('userRole').disabled=!admin;});
+   const actions=cell(tr,'');
+   if(admin || u.roles.every(r=>r==='ROLE_USER'))button(actions,'Sửa',()=>{ $('editUser').hidden=false;$('userId').value=u.id;$('userName').value=u.fullName;$('userRegion').value=u.region||'';$('userRole').value=u.roles[0];$('userLocked').checked=u.locked;$('userRegion').disabled=!admin;$('userRole').disabled=!admin;});
+   if(u.id!==currentUserId && !u.roles.includes('ROLE_ADMIN') && (admin || u.roles.every(r=>r==='ROLE_USER')))
+    button(actions,'Xóa',async()=>{if(!confirm('Xóa vĩnh viễn tài khoản '+u.email+' cùng toàn bộ thiết bị, dữ liệu đo và cảnh báo của tài khoản này?'))return;await api('/api/management/users/'+u.id,'DELETE');if($('userId').value===String(u.id))$('editUser').hidden=true;notice('Đã xóa vĩnh viễn tài khoản '+u.email+'.');await load();});
    $('usersBody').append(tr);
   }
   $('userPage').textContent='Trang '+(page+1)+' · '+data.totalElements+' người dùng';$('prevUsers').disabled=page===0;$('nextUsers').disabled=data.last;
  }
- run(async()=>{admin=(await api('/api/account')).roles.includes('ROLE_ADMIN');await load();})();
+ run(async()=>{const me=await api('/api/account');admin=me.roles.includes('ROLE_ADMIN');currentUserId=me.id;$('newRegion').defaultValue=me.region||'';$('newRegion').value=me.region||'';$('newRegion').readOnly=!admin;$('newRole').disabled=!admin;await load();})();
+ $('showCreateUser').onclick=()=>{$('createUser').hidden=false;$('newEmail').focus();};
+ $('cancelCreateUser').onclick=()=>{$('createUser').reset();$('createUser').hidden=true;};
+ $('createUser').onsubmit=run(async()=>{
+  const created=await api('/api/management/users','POST',{email:$('newEmail').value,fullName:$('newName').value,password:$('newPassword').value,region:$('newRegion').value,role:$('newRole').value});
+  $('createUser').reset();$('createUser').hidden=true;page=0;$('query').value='';notice('Đã tạo tài khoản '+created.email+'.');await load();
+ });
  $('searchUsers').onsubmit=run(async()=>{page=0;await load();});$('prevUsers').onclick=run(async()=>{page--;await load();});$('nextUsers').onclick=run(async()=>{page++;await load();});
  $('editUser').onsubmit=run(async()=>{await api('/api/management/users/'+$('userId').value,'PUT',{fullName:$('userName').value,region:$('userRegion').value,role:$('userRole').value,locked:$('userLocked').checked});$('editUser').hidden=true;notice('Đã cập nhật; các phiên đăng nhập cũ của tài khoản đã bị thu hồi.');await load();});
 }
